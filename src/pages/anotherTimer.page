@@ -1,0 +1,281 @@
+<apex:page standardController="Case" extensions="CaseTimeController"  showHeader="false" sidebar="false">
+   <apex:includeScript value="/support/console/34.0/integration.js"/>
+   <apex:includeScript value="/resource/timerjqueryjs"/>
+   <apex:includeScript value="/resource/timerjs"/>
+  <!-- <apex:stylesheet value="/resource/timerbootstrap"/> -->
+   <apex:stylesheet value="{!URLFOR($Resource.timerlightningdesign, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+ 
+    
+
+    
+    <script type="text/javascript">
+       
+    // alert('open tab');  
+    
+       var jq = jQuery.noConflict();
+    
+
+       
+    
+      jq(function(){
+      
+          
+          //converts seconds to hh:mm:ss 
+          var total = jq('#totalTime').data('total');
+          
+          jq('#totalTime').html('Total: '+secondsTimeSpanToHMS(total));
+          
+          var elems = jq('tbody #duration');
+          
+          elems.each(function(){
+             jq(this).html(secondsTimeSpanToHMS(jq(this).data('duration')));
+          });
+          
+          function secondsTimeSpanToHMS(s) {
+            var h = Math.floor(s/3600); //Get whole hours
+            s -= h*3600;
+            var m = Math.floor(s/60); //Get remaining minutes
+            s -= m*60;
+            return (h < 10 ? '0'+h : h)+":"+(m < 10 ? '0'+m : m)+":"+(s < 10 ? '0'+s : s); //zero padding on minutes and seconds
+          } 
+          //converts seconds to hh:mm:ss ends
+          
+          jq('#play').hide();
+          jq('#divId').attr('class','ticking');
+          
+          
+          jq('#play').click(function(){
+          
+              jq('#divId').timer('resume');
+              jq('#divId').attr('class','ticking');
+              jq(this).hide();
+              jq('#pause').show();             
+          });
+          
+          jq('#pause').click(function(){
+             
+              jq('#divId').timer('pause');
+              jq('#divId').attr('class','paused');
+              jq(this).hide();
+              jq('#play').show();
+          });
+          
+          
+          
+          jq('#divId').timer({
+					format: '%H:%M:%S'
+                    //  editable: true
+          }); 
+          
+          
+          var showTabId = function showTabId(result) {
+            //Display the tab ID
+            //  alert('Tab ID: ' + result.id);
+               
+           var elem = jq('#navigatortab__'+result.id+' tabText');
+               
+           elem.click(function(){
+              
+               alert('got here');
+           });  
+             
+               // debugger;
+            
+               //     setTimeout(alert(elem.innerHTML), 1000000);
+        };
+    
+        sforce.console.getFocusedPrimaryTabId(showTabId);
+          
+          
+         var onEnclosingPrimaryTabClose = function (result) {
+          
+           var caseId = result.objectId;
+           var duration = jq('#divId').data('seconds');
+             
+           debugger;
+          
+          Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.CaseTimeController.recordSession}',
+            caseId,
+            duration,
+            function(result, event){
+                //   window.location.reload();
+            }, 
+            {escape: false}
+          );
+        };
+    
+        //Add a listener to handle the closing of the enclosing primary tab 
+        sforce.console.getEnclosingPrimaryTabId(function (result) { 
+            if (result.id) {
+                sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB,
+                onEnclosingPrimaryTabClose, { tabId : result.id });
+            } else {
+                alert(result.objectId);
+            }
+        });
+          
+          /*   
+        var callback = function (result) {
+            if(result.success){
+              alert('success');
+            }
+            else{ 
+              alert('Something is wrong.');
+            }
+        };
+        sforce.console.refreshNavigationTab(callback); 
+         */
+        sforce.console.addEventListener(sforce.console.ConsoleEvent.CONSOLE_LOGOUT, onEnclosingPrimaryTabClose);
+          
+          
+        
+  
+      });
+    
+    
+       
+            
+     
+       
+    
+    
+       
+       
+  </script>
+    
+    <style>
+        
+        .timerContainer {
+            padding: 0;
+            border-radius: 4px;
+            background-clip: padding-box;
+            background-color: #f4f6f9;
+            border: 1px solid #d8dde6;
+            
+        
+        }
+        
+       
+        
+        .timer {
+           padding-top: 20px;
+           width:100%;
+           height:100px;
+        }
+        
+        .buttonAndTimer { 
+          font-size: 0.8em;
+          padding: 0;
+          padding-top: 18px;
+        }
+        
+        .buttonAndTimer li{
+          list-style-type: none;
+          margin:0;
+          line-height: 0px;
+        }
+        
+       .buttonAndTimer li img{
+          vertical-align: middle;
+        }
+        
+        .buttonAndTimer li p{
+            font-size:30px;
+            padding-left: 10%;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .agentname {
+          color:#0077D4;
+        }
+        
+        .ticking {
+          color:#4BCA80;
+        }
+        
+        .paused {
+          color:#15325C;
+        }
+        
+    </style>
+
+<div class="slds timerContainer">
+    
+    <div class="slds-card">
+    </div>
+   <!-- PAGE HEADER -->
+        <div class="slds-page-header" role="banner">
+        
+          <!-- LAYOUT GRID -->
+          <div class="slds-grid">
+        
+            <!-- GRID COL -->
+            <div class="slds-col">
+        
+              <!-- HEADING AREA -->
+              <h3 class="slds-text-heading--small slds-truncate">Session Timer</h3>
+              <!-- /HEADING AREA -->
+        
+            </div>
+        
+            <!-- GRID COL -->
+            <div class="slds-col slds-no-flex slds-align-middle">
+        
+                <p id="totalTime" data-total="{!case.Cumulative_Time__c}"></p>
+        
+            </div>
+            <!-- / GRID COL -->
+        
+          </div>
+          <!-- / LAYOUT GRID -->
+        
+        </div>
+        <!-- / PAGE HEADER -->
+    
+    <div class="timer">
+       
+       <center>
+            <ul class="buttonAndTimer">
+                <li><img id="play" src="/resource/timerplay" alt="playbutton" /> <img id="pause" src="/resource/timerpause" alt="pausebutton" /> <p id="divId"/></li>                           
+            </ul>
+        </center>
+
+    </div>
+    <div class="slds-scrollable--y">
+    <table class="slds-table slds-table--bordered slds-no-row-hover">
+          <thead>
+            <tr>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
+            </tr>
+          </thead>
+         
+          <tbody>
+         
+              <apex:repeat value="{!sessions}" var="session">
+               <tr class="slds-hint-parent">
+                  <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
+                  <td class="slds-size--1-of-3" data-label="DATE">
+                      <apex:outputText value="{0,date, d MMM yyyy}">
+                        <apex:param value="{!session.Date__c}"/>
+                     </apex:outputText>           
+                   </td>
+                  <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}"></td>
+               </tr>
+             </apex:repeat>
+           
+          </tbody>
+         
+        </table>
+    </div>
+</div>
+    
+        
+      
+    
+
+    
+</apex:page>

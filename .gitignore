@@ -1,0 +1,10 @@
+*.sublime-project
+*.sublime-settings
+*.sublime-workspace
+.DS_Store
+*/.DS_Store
+**/.manifest
+**/*-meta.xml
+config
+metadata
+

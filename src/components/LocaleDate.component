@@ -1,0 +1,5 @@
+<apex:component access="global" controller="LocaleDateController">
+<apex:attribute assignTo="{!dateValue}" description="The Date value to be rendered based upon the user's
+               locale" name="date_Value" type="DateTime"></apex:attribute>
+       {!TimeZoneValue}
+</apex:component>

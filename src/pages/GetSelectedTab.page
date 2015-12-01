@@ -1,0 +1,13 @@
+<apex:page standardController="Case" showHeader="false" sidebar="false">
+   <apex:includeScript value="/support/console/34.0/integration.js"/>
+    <script>
+         
+        var eventHandler = function (result) {
+           sforce.console.fireEvent('ObjectEvent', result.objectId); 
+        };
+        
+        sforce.console.onFocusedPrimaryTab(eventHandler);
+   
+    </script>
+    
+</apex:page>
