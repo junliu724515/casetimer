@@ -11,8 +11,7 @@
       var jq = jQuery.noConflict();
         
       var selectedCaseObjectId;
-        
-        
+    
       jq(function(){
                     
           
@@ -72,9 +71,9 @@
           
           var startOrPause = function(recordid){
              var recordId = jq('#recordId').val().slice(0, -3);
-                debugger;
+              //    debugger;
                if (recordId != recordid) {
-                   debugger;
+                   //       debugger;
                    pause();
                }
                else{
@@ -116,7 +115,7 @@
         var setSelectedCaseObjectId = function(){
         
             sforce.console.getFocusedSubtabObjectId(function(subTabObjectId){
-                     debugger;
+                //     debugger;
                      selectedCaseObjectId = subTabObjectId.id;
                 });
         };
@@ -133,7 +132,7 @@
     
         //Add a listener to handle the closing of the enclosing primary tab       
         sforce.console.getFocusedPrimaryTabId(function (result) { 
-                debugger;
+            //      debugger;
             if (result.id) {       
                  
                 attachExitListners(); 
@@ -207,7 +206,44 @@
             {escape: true}
           );
           
-       });         
+       });
+          
+       var showAutoTab = function(){           
+         debugger;
+         jq('#active-auto-icon').show();
+         jq('#inactive-manual-icon').show();
+         jq('#inactive-auto-icon').hide();
+         jq('#active-manual-icon').hide();
+       };
+          
+       var showManualTab = function(){
+         jq('#active-auto-icon').hide();
+         jq('#inactive-manual-icon').hide();
+         jq('#inactive-auto-icon').show();
+         jq('#active-manual-icon').show();    
+       };
+        
+       // show auto as the active tab
+       showAutoTab();
+          
+       jq('#tab-default-1__item').click(function(){
+           showAutoTab();
+           jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
+           jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
+           jq('#tab-default-1').attr('class','slds-tabs--default__content slds-show');
+           jq('#tab-default-2').attr('class','slds-tabs--default__content slds-hide');
+       });
+       
+       jq('#tab-default-2__item').click(function(){
+           showManualTab();
+           jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
+           jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
+           jq('#tab-default-2').attr('class','slds-tabs--default__content slds-show');
+           jq('#tab-default-1').attr('class','slds-tabs--default__content slds-hide');
+       });
+          
+       
+      
 
     });
      
@@ -276,6 +312,14 @@
             
         }
         
+        .timer-tab-size {
+           width:50%;
+           height:10%;
+           text-align: center;
+           padding-top: 3%;
+           font-size: 16px;
+        }
+        
         
         
     </style>
@@ -326,7 +370,21 @@
         </div>
         <!-- / PAGE HEADER -->
     
-    <div class="timer">
+    <div class="slds-tabs--default">
+  <ul class="slds-tabs--default__nav" role="tablist">
+    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size" title="Item One" role="presentation">
+        
+        <img id="active-auto-icon" src="{!$Resource.timerautoactive}"/>
+        <img id="inactive-auto-icon" src="{!$Resource.timerautoinactive}"/>    
+        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1" id="tab-default-1__item">Auto</a>
+    </li>
+    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active" title="Item Two" role="presentation">
+        <img id="active-manual-icon" src="{!$Resource.timermanualactive}"/>
+        <img id="inactive-manual-icon" src="{!$Resource.timermanualinactive}"/>
+        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2" id="tab-default-2__item">Manual</a>
+    </li>
+  </ul>
+   <div class="timer">
        
        <center>
             <ul class="buttonAndTimer">
@@ -335,7 +393,9 @@
         </center>
 
     </div>
-    <div class="slds-scrollable--y" style="max-height:220px;">
+        
+  <div id="tab-default-1" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-1__item">
+     <div class="slds-scrollable--y" style="max-height:220px;">
     <table class="slds-table slds-table--bordered slds-no-row-hover">
           <thead>
             <tr>
@@ -361,6 +421,37 @@
          
         </table>
     </div>
+  </div>
+  <div id="tab-default-2" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-2__item">
+    <div class="slds-scrollable--y" style="max-height:220px;">
+    <table class="slds-table slds-table--bordered slds-no-row-hover">
+          <thead>
+            <tr>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
+              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
+            </tr>
+          </thead>
+         
+          <tbody>
+             <apex:repeat value="{!manualSessions}" var="session">
+               <tr class="slds-hint-parent">
+                  <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
+                  <td class="slds-size--1-of-3" data-label="DATE">
+                      <c:LocaleDate date_Value="{!session.Date__c}"/>       
+                   </td>
+                  <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}"></td>
+               </tr>
+             </apex:repeat>          
+          </tbody>
+         
+        </table>
+    </div>
+  </div>
+  
+</div>
+    
+   
     
     
     <div>

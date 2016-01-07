@@ -1,7 +1,15 @@
-Global class CaseTimeController {
+Global with sharing class CaseTimeController {
     
     public List<Session_Time__c> sessions;
     public String recordId {get;set;}
+    public List<Session_Time__c> manualSessions {
+        get{
+           manualSessions = [select Id, Agent__r.Name, Date__c, Duration__c from Session_Time__c where Case__r.Id=:recordId and Type__c = 'Manual' order by Date__c desc];
+           return manualSessions;  
+        }
+        set;
+        
+    }
     
     public CaseTimeController(ApexPages.StandardController stdController){
         recordId = (String)stdController.getRecord().Id;
