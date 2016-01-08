@@ -1,7 +1,26 @@
 Global with sharing class CaseTimeController {
     
-    public List<Session_Time__c> sessions;
+   
     public String recordId {get;set;}
+    public String duration {get;set;} 
+    public String comments {get;set;}
+ 
+    public Decimal cumulativeTime {
+        get {
+             Case currentCase = [select Id, Cumulative_Time__c from Case where Id =:recordId limit 1];
+             return currentCase.Cumulative_Time__c;
+        }
+        set;
+    }
+    
+    public List<Session_Time__c> sessions {
+        get{
+            sessions = [select Id, Agent__r.Name, Date__c, Duration__c from Session_Time__c where Case__r.Id=:recordId and Type__c = 'Automatic' order by Date__c desc];
+            return sessions;      
+        }
+        set;      
+    }
+    
     public List<Session_Time__c> manualSessions {
         get{
            manualSessions = [select Id, Agent__r.Name, Date__c, Duration__c from Session_Time__c where Case__r.Id=:recordId and Type__c = 'Manual' order by Date__c desc];
@@ -13,10 +32,6 @@ Global with sharing class CaseTimeController {
     
     public CaseTimeController(ApexPages.StandardController stdController){
         recordId = (String)stdController.getRecord().Id;
-    }
-    
-    public CaseTimeController(){
-     
     }
     
     @RemoteAction
@@ -33,16 +48,16 @@ Global with sharing class CaseTimeController {
         session.Type__c = 'Automatic';
         
         insert session;
-        System.debug('sessionId: ' + session.Id);
+     //   System.debug('sessionId: ' + session.Id);
         return session.Id;
 
     }
+ 
     
-    @RemoteAction
-    Global static Decimal recordManualSession(String caseId, String duration, String comments) {
+    public PageReference recordManualSession() {
         
         Session_Time__c session = new Session_Time__c();
-        session.Case__c = caseId;
+        session.Case__c = recordId;
         session.Date__c = System.now();
         session.Duration__c = Integer.valueOf(duration);
         session.Agent__c = UserINFO.getUserId();
@@ -50,24 +65,9 @@ Global with sharing class CaseTimeController {
         session.Comments__c = comments;
         
         insert session;
-        System.debug('sessionId: ' + session.Id);
-        
-        Case currentCase = [select Id, Cumulative_Time__c from Case where Id =:caseId limit 1];
-        
-        return currentCase.Cumulative_Time__c;
+     //   System.debug('sessionId: ' + session.Id);
+
+        return null;
     }
     
-    
-    public List<Session_Time__c> getSessions(){
-        
-         sessions = [select Id, Agent__r.Name, Date__c, Duration__c from Session_Time__c where Case__r.Id=:recordId and Type__c = 'Automatic' order by Date__c desc];
-
-         return sessions;
-        
-    }
-    
-    
-    
-    
-
 }

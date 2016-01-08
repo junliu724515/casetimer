@@ -1,26 +1,55 @@
 @IsTest
 public class CaseTimeControllerTest {
 
+    
+    @testSetup 
+    public static void setTuTestdata() {
+    
+        Case newCase = new Case();
+        newCase.Subject = 'test';        
+        insert newCase;   
+    }
+    
+    
+    
     @IsTest
     public static void testRecordSession(){
+       
+        Case testCase = [select Subject from Case where Subject = 'test']; 
+        ApexPages.StandardController strc = new ApexPages.StandardController(testCase);       
+        CaseTimeController contr = new CaseTimeController(strc); 
         
-        CaseTimeController.recordSession('50028000004ubJ2', '56');
+        Test.startTest();
+        CaseTimeController.recordSession(testCase.Id, '56');
+        Test.stopTest();
+        
+        List<Session_Time__c> sessions = contr.sessions;
+        System.assertEquals(sessions.size(), 1);
+        System.assertEquals(sessions.get(0).Duration__c, 56);
+        System.assertEquals(contr.cumulativeTime, 56);
     }
+    
     
     @IsTest
     public static void testRecordManualSession(){
         
-        CaseTimeController.recordManualSession('50028000004ubJ2', '60', 'from unit test');
+        Case testCase = [select Subject from Case where Subject = 'test']; 
+        ApexPages.StandardController strc = new ApexPages.StandardController(testCase);    
+        CaseTimeController contr = new CaseTimeController(strc); 
+        contr.recordId = testCase.Id;
+        contr.duration = '100';
+        contr.comments = 'this is a test';
+
+        Test.startTest();
+        contr.recordManualSession();
+        Test.stopTest();
+        
+        List<Session_Time__c> sessions = contr.manualSessions;
+        System.assertEquals(sessions.size(), 1);
+        System.assertEquals(sessions.get(0).Duration__c, 100);
+        System.assertEquals(contr.cumulativeTime, 100);
+        
     }
     
-    @IsTest(SeeAllData=true)
-    public static void  testGetSessions(){
-        
-        CaseTimeController controller = new CaseTimeController();
-        controller.recordId = '50028000004ubJ2';     
-        List<Session_Time__c> sessions = controller.getSessions();
-        
-        system.assert(sessions.size()>0);
-        
-    }
+
 }

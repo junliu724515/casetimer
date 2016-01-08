@@ -9,10 +9,12 @@ public class LocaleDateControllerTest {
 
         controller.dateValue = DateTime.now();
         
-        String dateString = controller.getTimeZoneValue();
+        System.assert(controller.getTimeZoneValue()!=null);
+     
         
-        System.assert(dateString!=null);       
+        controller.dateValue = null;
         
+        System.assert(controller.getTimeZoneValue()==null);        
         
     }
     
