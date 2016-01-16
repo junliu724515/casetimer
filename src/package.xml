@@ -17,14 +17,12 @@
         <name>ApexTrigger</name>
     </types>
     <types>
-        <members>*</members>
-        <name>StaticResource</name>
-    </types>
-    <types>
         <members>Session_Time__c</members>
         <name>CustomObject</name>
     </types>
-    
-      
+    <types>
+        <members>*</members>
+        <name>StaticResource</name>
+    </types>
     <version>31.0</version>
 </Package>

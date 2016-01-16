@@ -122,7 +122,12 @@
 				totalSeconds = Number(valArr[0] * 3600) + Number(valArr[1] * 60) + Number(valArr[2]);
 			}
 
-			resumeTimer();
+            // this is check if the timer is running by using css property when editing, 
+            // if paused already, leave it to be paused
+			if ($el.attr('class').indexOf('ticking') > -1 ) {
+			  resumeTimer();
+			}
+		
 		});
 	}
 

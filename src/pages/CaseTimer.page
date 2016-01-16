@@ -288,10 +288,11 @@
         }
         
         #divId {
-          width:40%;
+          width:50%;
           font-size: 30px;
           margin:3%;
           border: none !important;
+          text-align:center;
         }
         
         
