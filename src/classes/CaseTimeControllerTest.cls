@@ -2,18 +2,19 @@
 public class CaseTimeControllerTest {
 
     
-    @testSetup 
-    public static void setTuTestdata() {
+    @testSetup static void setupTestdata() {
     
         Case newCase = new Case();
         newCase.Subject = 'test';        
-        insert newCase;   
+        insert newCase; 
+        
+        Case testCase = [select Subject from Case where Subject = 'test']; 
+        System.assertEquals(testCase.Subject, 'test');
     }
     
     
     
-    @IsTest
-    public static void testRecordSession(){
+    @IsTest static void testRecordSession(){
        
         Case testCase = [select Subject from Case where Subject = 'test']; 
         ApexPages.StandardController strc = new ApexPages.StandardController(testCase);       
@@ -30,8 +31,7 @@ public class CaseTimeControllerTest {
     }
     
     
-    @IsTest
-    public static void testRecordManualSession(){
+    @IsTest static void testRecordManualSession(){
         
         Case testCase = [select Subject from Case where Subject = 'test']; 
         ApexPages.StandardController strc = new ApexPages.StandardController(testCase);    

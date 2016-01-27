@@ -2,8 +2,7 @@
 public class TimeConvensionControllerTest {
 
     
-    @IsTest
-    public static void testTimeconversion() {
+    @IsTest static void testTimeconversion() {
         
         
         TimeConversionController controller = new TimeConversionController();

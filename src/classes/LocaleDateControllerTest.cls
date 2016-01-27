@@ -1,8 +1,7 @@
 @IsTest
 public class LocaleDateControllerTest {
 
-    @IsTest
-    public static void testGetTimeZoneValue() {
+    @IsTest static void testGetTimeZoneValue() {
         
         
         LocaleDateController controller = new LocaleDateController();

@@ -26,6 +26,7 @@ fi
 
 printf "\n"
 ant -f CI/build.xml deployAndTest
+echo $?
 
 
 

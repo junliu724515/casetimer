@@ -1,9 +1,8 @@
 <apex:page standardController="Case" extensions="CaseTimeController"  showHeader="false" sidebar="false">
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
    <apex:includeScript value="/support/console/34.0/integration.js"/>
-   <apex:includeScript value="/resource/timerjqueryjs"/>
-   <apex:includeScript value="/resource/timerjs"/>
-  <!-- <apex:stylesheet value="/resource/timerbootstrap"/> -->
+   <apex:includeScript value="{!$Resource.timerjqueryjs}"/>
+   <apex:includeScript value="{!$Resource.timerjs}"/>
    <apex:stylesheet value="{!URLFOR($Resource.timerlightningdesign, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
  
     <script type="text/javascript">
@@ -11,8 +10,54 @@
       var jq = jQuery.noConflict();
         
       var selectedCaseObjectId;
+
+      window.onload = function() {
+
+
+            var hidden, visibilityState, visibilityChange;
+
+            if (typeof document.hidden !== "undefined") {
+                hidden = "hidden", visibilityChange = "visibilitychange", visibilityState = "visibilityState";
+            }
+            else if (typeof document.mozHidden !== "undefined") {
+                hidden = "mozHidden", visibilityChange = "mozvisibilitychange", visibilityState = "mozVisibilityState";
+            }
+            else if (typeof document.msHidden !== "undefined") {
+                hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
+            }
+            else if (typeof document.webkitHidden !== "undefined") {
+                hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
+            }
+            
+            document.addEventListener(visibilityChange, function() {
+                console.log("hidden: " + document[hidden]);
+                console.log(document[visibilityState]);
+
+                switch (document[visibilityState]) {
+                case "visible":
+                  //  debugger;
+                    sforce.console.fireEvent('ObjectEvent', selectedCaseObjectId);
+                    break;
+                case "hidden":
+                //    debugger;
+                    sforce.console.fireEvent('StopEvent');
+                    break;
+                }
+          });
+
+        };
+
     
       jq(function(){
+
+          //refresh event to keep the time value in session          
+         jq( window ).bind("beforeunload", function() {
+           //  debugger;
+             var recordId = jq('#recordId').val();
+             sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
+         });
+
+
 
           jq('#play').hide();
           // jq('#timerEdit').hide();
@@ -20,11 +65,24 @@
           
           
           var start = function(){
-              debugger;
-              jq('#divId').timer({
-                  editable: true,
-                  format: '%H:%M:%S',
-              });
+          //  debugger;
+            //if the there is time stored in session, start the timer from seconds left before refresh
+            var recordId = jq('#recordId').val();
+            var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
+            if (secondsOnPage === 'NaN' || secondsOnPage === null) {
+                jq('#divId').timer({
+                    editable: true,
+                    format: '%H:%M:%S',
+                });
+             }else {
+                jq('#divId').timer({
+                    seconds: secondsOnPage,
+                    editable: true,
+                    format: '%H:%M:%S',
+                });
+             }
+             //reset the time
+             sessionStorage.removeItem(recordId+'secondsOnPage');
           }
           
           var play = function(){
@@ -126,6 +184,10 @@
           
         //the event listener to hanle the fired event by swithing console tabs
         sforce.console.addEventListener('ObjectEvent', listener);
+        sforce.console.addEventListener('StopEvent', function(){
+            //   debugger;
+            pause();
+        });
              
         var openPopup = function(){
         
@@ -364,7 +426,7 @@
        
        <center>
             <ul class="buttonAndTimer">
-                <li><img id="play" src="/resource/timerplay" alt="playbutton" /> <img id="pause" src="/resource/timerpause" alt="pausebutton" /> 
+                <li><img id="play" src="{!$Resource.timerplay}" alt="playbutton" /> <img id="pause" src="{!$Resource.timerpause}" alt="pausebutton" /> 
                   <!--  <p id="divId"/> -->
                     <input id="divId" type='text' name='timer' class='slds-input'/>
                 </li>
