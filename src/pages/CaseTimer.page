@@ -50,10 +50,13 @@
     
       jq(function(){
 
-          //refresh event to keep the time value in session          
+          var recordId = jq('#recordId').val();
+
+          var isClosedCase = {!isClosedCase};
+
+          //refresh event to keep the time value in session
          jq( window ).bind("beforeunload", function() {
-           //  debugger;
-             var recordId = jq('#recordId').val();
+             //debugger;
              sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
          });
 
@@ -67,7 +70,7 @@
           var start = function(){
           //  debugger;
             //if the there is time stored in session, start the timer from seconds left before refresh
-            var recordId = jq('#recordId').val();
+
             var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
             if (secondsOnPage === 'NaN' || secondsOnPage === null) {
                 jq('#divId').timer({
@@ -108,8 +111,22 @@
           jq('#play').click(play);
           
           jq('#pause').click(pause);
-          
-          start();
+
+          if (recordId) {
+             //if the case is closed, no timer
+             if (isClosedCase){
+                 jq('.timer').hide();
+             }
+             else{
+                 start();
+             }
+          }
+          //if the case is not saved, don't show the timer
+          else{
+              jq('.slds-tabs--default').hide();
+          }
+
+
           
           var startOrPause = function(recordid){
              var recordId = jq('#recordId').val().slice(0, -3);
