@@ -13,3 +13,7 @@ Option 2:
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/src/main/webapp/resources/img/deploy.png">
 </a>
 
+The latest code fixes:
+
+1. Stop/Hide the timer for unsaved or closed cases
+2. Allow reports on Custom object Sesstion time
