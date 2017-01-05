@@ -36,7 +36,7 @@ public  class ClosedCaseTest {
         Boolean result = contr.isClosedCase;
         Test.stopTest();
 
-        System.assertEquals(result, true);
+        System.assertEquals(result, false);
 
     }
 }
