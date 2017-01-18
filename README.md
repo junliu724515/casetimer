@@ -2,7 +2,7 @@
 
 How to install
 
-Option 1: you can install using the lastest unmanaged package: https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nsGb
+Option 1: you can install using the lastest unmanaged package v1.14: 	https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nsGg
 
 
 Option 2:
@@ -13,7 +13,11 @@ Option 2:
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/src/main/webapp/resources/img/deploy.png">
 </a>
 
-The latest code fixes:
+fixes (v.1.14):
+
+1. fixed the timer for reopened cases 
+
+fixes (v1.13):
 
 1. Stop/Hide the timer for unsaved or closed cases
 2. Allow reports on Custom object Sesstion time
