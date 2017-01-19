@@ -1,17 +1,19 @@
 <apex:page standardController="Case" extensions="CaseTimeController"  showHeader="false" sidebar="false">
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-   <apex:includeScript value="/support/console/34.0/integration.js"/>
-   <apex:includeScript value="{!$Resource.timerjqueryjs}"/>
-   <apex:includeScript value="{!$Resource.timerjs}"/>
-   <apex:stylesheet value="{!URLFOR($Resource.timerlightningdesign, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        <apex:includeScript value="/support/console/38.0/integration.js"/>
+        <apex:includeScript value="{!$Resource.timerjqueryjs}"/>
+        <apex:includeScript value="{!$Resource.timerjs}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.timerlightningdesign, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
 
-    <script type="text/javascript">
+        <script type="text/javascript">
 
-      var jq = jQuery.noConflict();
+        var jq = jQuery.noConflict();
 
-      var selectedCaseObjectId;
+        var recordId;
 
-      window.onload = function() {
+        var isLoggedOut = false;
+
+        window.onload = function() {
 
 
             var hidden, visibilityState, visibilityChange;
@@ -22,283 +24,264 @@
             else if (typeof document.mozHidden !== "undefined") {
                 hidden = "mozHidden", visibilityChange = "mozvisibilitychange", visibilityState = "mozVisibilityState";
             }
-            else if (typeof document.msHidden !== "undefined") {
-                hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
-            }
-            else if (typeof document.webkitHidden !== "undefined") {
-                hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
-            }
+                else if (typeof document.msHidden !== "undefined") {
+                    hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
+                }
+                    else if (typeof document.webkitHidden !== "undefined") {
+                        hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
+                    }
 
             document.addEventListener(visibilityChange, function() {
                 console.log("hidden: " + document[hidden]);
                 console.log(document[visibilityState]);
 
                 switch (document[visibilityState]) {
-                case "visible":
-                  //  debugger;
-                    sforce.console.fireEvent('ObjectEvent', selectedCaseObjectId);
-                    break;
-                case "hidden":
-                //    debugger;
-                    sforce.console.fireEvent('StopEvent');
-                    break;
+                    case "visible":
+                        sforce.console.fireEvent('ObjectEvent', recordId);
+                        break;
+                    case "hidden":
+                        sforce.console.fireEvent('StopEvent');
+                        break;
                 }
-          });
-
-        };
-
-
-      jq(function(){
-
-          var recordId = jq('#recordId').val();
-
-          var isClosedCase = {!isClosedCase};
-
-          //refresh event to keep the time value in session
-         jq( window ).bind("beforeunload", function() {
-             //debugger;
-             sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
-         });
-
-
-
-          jq('#play').hide();
-          // jq('#timerEdit').hide();
-          jq('#divId').attr('class','ticking slds-input');
-
-
-          var start = function(){
-          //  debugger;
-            //if the there is time stored in session, start the timer from seconds left before refresh
-
-            var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
-            if (secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined') {
-                jq('#divId').timer({
-                    editable: true,
-                    format: '%H:%M:%S',
-                });
-             }else {
-                jq('#divId').timer({
-                    seconds: secondsOnPage,
-                    editable: true,
-                    format: '%H:%M:%S',
-                });
-             }
-             //reset the time
-             sessionStorage.removeItem(recordId+'secondsOnPage');
-          }
-
-          var play = function(){
-              //   debugger;
-              jq('#divId').timer('resume');
-              jq('#divId').attr('class','ticking slds-input');
-              jq('#play').hide();
-              jq('#pause').show();
-
-          };
-
-
-          var pause = function(){
-              //  debugger;
-              jq('#divId').timer('pause');
-              jq('#divId').attr('class','paused slds-input');
-              jq('#pause').hide();
-              jq('#play').show();
-
-          };
-
-
-          jq('#play').click(play);
-
-          jq('#pause').click(pause);
-
-          if (recordId) {
-             //if the case is closed, no timer
-             if (isClosedCase){
-                 jq('.timer').hide();
-             }
-             else{
-                 start();
-             }
-          }
-          //if the case is not saved, don't show the timer
-          else{
-              jq('.slds-tabs--default').hide();
-          }
-
-
-
-          var startOrPause = function(recordid){
-             var recordId = jq('#recordId').val().slice(0, -3);
-               if (recordId != recordid) {
-                   pause();
-               }
-               else{
-                   play();
-               }
-
-          };
-
-
-         var listener = function(result) {
-
-           sforce.console.getFocusedSubtabObjectId(function(subResult){
-              startOrPause(subResult.id);
-           });
-
-         };
-
-         sforce.console.onFocusedSubtab(function(result){
-             startOrPause(result.objectId);
-         });
-
-         var onTabClose = function (result) {
-             //   debugger;
-           var caseId = result.objectId;
-           var duration = jq('#divId').data('seconds');
-
-           Visualforce.remoting.Manager.invokeAction(
-            '{!$RemoteAction.CaseTimeController.recordSession}',
-            caseId,
-            duration,
-            function(result, event){
-
-            },
-            {escape: true}
-           );
-
-         };
-
-        var setSelectedCaseObjectId = function(){
-
-            sforce.console.getFocusedSubtabObjectId(function(subTabObjectId){
-                //     debugger;
-                     selectedCaseObjectId = subTabObjectId.id;
-                });
-        };
-
-        var attachExitListners = function(){
-
-            sforce.console.getFocusedSubtabId(function(subTabId){
-                    sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB,
-                         onTabClose, { tabId : subTabId.id });
-                    sforce.console.addEventListener(sforce.console.ConsoleEvent.CONSOLE_LOGOUT,
-                         onTabClose, { tabId : subTabId.id });
             });
+
         };
 
-        //Add a listener to handle the closing of the enclosing primary tab
-        sforce.console.getFocusedPrimaryTabId(function (result) {
-            if (result.id) {
 
-                attachExitListners();
+        jq(function(){
 
-                setSelectedCaseObjectId();
+            recordId = jq('#recordId').val();
 
+            var isClosedCase = {!isClosedCase};
+
+            //refresh event to keep the time value in session
+            jq( window ).bind("beforeunload", function() {
+                //   debugger;
+                if (!isLoggedOut) {
+                  sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
+                }
+            });
+
+
+
+            jq('#play').hide();
+            // jq('#timerEdit').hide();
+            jq('#divId').attr('class','ticking slds-input');
+
+
+            var start = function(){
+                //  debugger;
+                //if the there is time stored in session, start the timer from seconds left before refresh
+                var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
+                if (secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined') {
+                    jq('#divId').timer({
+                        editable: true,
+                        format: '%H:%M:%S',
+                    });
+                }else {
+                    jq('#divId').timer({
+                        seconds: secondsOnPage,
+                        editable: true,
+                        format: '%H:%M:%S',
+                    });
+                }
+                //reset the time
+                sessionStorage.removeItem(recordId+'secondsOnPage');
             }
 
+            var play = function(){
+                //   debugger;
+                jq('#divId').timer('resume');
+                jq('#divId').attr('class','ticking slds-input');
+                jq('#play').hide();
+                jq('#pause').show();
+
+            };
+
+
+            var pause = function(){
+                //  debugger;
+                jq('#divId').timer('pause');
+                jq('#divId').attr('class','paused slds-input');
+                jq('#pause').hide();
+                jq('#play').show();
+
+            };
+
+
+            jq('#play').click(play);
+
+            jq('#pause').click(pause);
+
+            if (recordId) {
+                //if the case is closed, no timer
+                if (isClosedCase){
+                    jq('.timer').hide();
+                }
+                else{
+                    start();
+                }
+            }
+            //if the case is not saved, don't show the timer
+            else{
+                jq('.slds-tabs--default').hide();
+            }
+
+
+
+            var startOrPause = function(recordid){
+                var recordId = jq('#recordId').val().slice(0, -3);
+                if (recordId != recordid) {
+                    pause();
+                }
+                else{
+                    play();
+                }
+
+            };
+
+            var onTabClose = function (tab) {
+                //check if it is logout event to avoid
+                //beforeunloadevent to cache the time again
+                if (tab.message=='SFORCE_CONSOLE:LOGOUT') {
+                   isLoggedOut = true;
+                }
+
+                console.log("closing and saving: " + recordId);
+
+                var duration = jq('#divId').data('seconds');
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CaseTimeController.recordSession}',
+                    recordId,
+                    duration,
+                    function(result, event){
+                    },
+                    {escape: true}
+                );
+
+
+            };
+
+            var setSelectedCaseObjectId = function(result){
+                //   console.log("message: " + result.message);
+                //suprisingly getFocusedSubtabObjectId can return primary or sub tab objectid
+                sforce.console.getFocusedSubtabObjectId(function(subTabObjectId){
+                    startOrPause(subTabObjectId.id);
+                });
+            };
+
+            //the event listener to hanle the fired event by swithing console primary tabs
+            sforce.console.addEventListener('ObjectEvent', setSelectedCaseObjectId);
+            //the event listener to hanle the fired event by swithing console sub tabs
+            sforce.console.onFocusedSubtab(function(result){
+                startOrPause(result.objectId);
+            });
+            sforce.console.addEventListener('StopEvent', function(){
+                //   debugger;
+                pause();
+            });
+
+            sforce.console.getEnclosingTabId(function(result){
+
+                sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, onTabClose, { tabId : result.id });
+            });
+
+            sforce.console.addEventListener(sforce.console.ConsoleEvent.CONSOLE_LOGOUT, onTabClose);
+
+            var openPopup = function(){
+
+                jq('#popup').addClass('slds-fade-in-open');
+                jq('#popup-backdrop').addClass('slds-modal-backdrop--open');
+            };
+
+            var closePopup = function(){
+
+                jq('#hours').val('');
+                jq('#minutes').val('');
+                jq('#comments').val('');
+                jq('#popup').removeClass('slds-fade-in-open');
+                jq('#popup-backdrop').removeClass('slds-modal-backdrop--open');
+            };
+
+            jq('#addtime').click(function(){
+                openPopup();
+            });
+
+            jq('#close, #cancel').click(function(){
+                closePopup();
+            });
+
+            jq('.slds-notify-container').hide();
+
+            var showMessage = function(message) {
+
+                jq('.slds-notify-container').show();
+                jq('#message').html(message);
+                jq('.slds-notify-container').fadeOut(5000);
+            };
+
+            jq('#save').click(function(){
+
+                var hours = jq('#hours').val();
+                var minutes = jq('#minutes').val();
+                var comments = jq('#comments').val();
+                var caseId = jq('#recordId').val();
+                var duration = hours * 3600 + minutes * 60;
+
+                addManualTime(duration, comments);
+                closePopup();
+                showMessage('total time updated.');
+                showManualTab();
+
+            });
+
+            var showAutoTab = function(){
+                jq('#active-auto-icon').show();
+                jq('#inactive-manual-icon').show();
+                jq('#inactive-auto-icon').hide();
+                jq('#active-manual-icon').hide();
+                jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
+                jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
+                jq('#tab-default-1').attr('class','slds-tabs--default__content slds-show');
+                jq('#tab-default-2').attr('class','slds-tabs--default__content slds-hide');
+            };
+
+            var showManualTab = function(){
+                jq('#active-auto-icon').hide();
+                jq('#inactive-manual-icon').hide();
+                jq('#inactive-auto-icon').show();
+                jq('#active-manual-icon').show();
+                jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
+                jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
+                jq('#tab-default-2').attr('class','slds-tabs--default__content slds-show');
+                jq('#tab-default-1').attr('class','slds-tabs--default__content slds-hide');
+            };
+
+            // show auto as the active tab
+            showAutoTab();
+
+            jq('#tab-default-1__item').click(function(){
+                showAutoTab();
+
+            });
+
+            jq('#tab-default-2__item').click(function(){
+                showManualTab();
+
+            });
+
+
+
+
         });
 
-        //the event listener to hanle the fired event by swithing console tabs
-        sforce.console.addEventListener('ObjectEvent', listener);
-        sforce.console.addEventListener('StopEvent', function(){
-            //   debugger;
-            pause();
-        });
 
-        var openPopup = function(){
+        </script>
 
-           jq('#popup').addClass('slds-fade-in-open');
-           jq('#popup-backdrop').addClass('slds-modal-backdrop--open');
-        };
+        <style>
 
-        var closePopup = function(){
-
-           jq('#hours').val('');
-           jq('#minutes').val('');
-           jq('#comments').val('');
-           jq('#popup').removeClass('slds-fade-in-open');
-           jq('#popup-backdrop').removeClass('slds-modal-backdrop--open');
-        };
-
-        jq('#addtime').click(function(){
-           openPopup();
-        });
-
-       jq('#close, #cancel').click(function(){
-          closePopup();
-       });
-
-       jq('.slds-notify-container').hide();
-
-       var showMessage = function(message) {
-
-           jq('.slds-notify-container').show();
-           jq('#message').html(message);
-           jq('.slds-notify-container').fadeOut(5000);
-       };
-
-       jq('#save').click(function(){
-
-           var hours = jq('#hours').val();
-           var minutes = jq('#minutes').val();
-           var comments = jq('#comments').val();
-           var caseId = jq('#recordId').val();
-           var duration = hours * 3600 + minutes * 60;
-
-           addManualTime(duration, comments);
-           closePopup();
-           showMessage('total time updated.');
-           showManualTab();
-
-       });
-
-       var showAutoTab = function(){
-         jq('#active-auto-icon').show();
-         jq('#inactive-manual-icon').show();
-         jq('#inactive-auto-icon').hide();
-         jq('#active-manual-icon').hide();
-         jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
-         jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
-         jq('#tab-default-1').attr('class','slds-tabs--default__content slds-show');
-         jq('#tab-default-2').attr('class','slds-tabs--default__content slds-hide');
-       };
-
-       var showManualTab = function(){
-         jq('#active-auto-icon').hide();
-         jq('#inactive-manual-icon').hide();
-         jq('#inactive-auto-icon').show();
-         jq('#active-manual-icon').show();
-         jq('#tab-default-2__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active');
-         jq('#tab-default-1__item').parent().attr('class','slds-tabs--default__item slds-text-heading--label timer-tab-size');
-         jq('#tab-default-2').attr('class','slds-tabs--default__content slds-show');
-         jq('#tab-default-1').attr('class','slds-tabs--default__content slds-hide');
-       };
-
-       // show auto as the active tab
-       showAutoTab();
-
-       jq('#tab-default-1__item').click(function(){
-           showAutoTab();
-
-       });
-
-       jq('#tab-default-2__item').click(function(){
-           showManualTab();
-
-       });
-
-
-
-
-    });
-
-
-  </script>
-
-    <style>
-
-        .timerContainer {
+            .timerContainer {
             padding: 0;
             border-radius: 4px;
             background-clip: padding-box;
@@ -306,291 +289,291 @@
             border: 1px solid #d8dde6;
 
 
-        }
+            }
 
 
 
-        .timer {
-           padding-top: 20px;
-           width:100%;
-           height:100px;
-        }
+            .timer {
+            padding-top: 20px;
+            width:100%;
+            height:100px;
+            }
 
-        .buttonAndTimer {
-          font-size: 0.8em;
-          padding: 0;
-          padding-top: 18px;
-        }
+            .buttonAndTimer {
+            font-size: 0.8em;
+            padding: 0;
+            padding-top: 18px;
+            }
 
-        .buttonAndTimer li{
-          list-style-type: none;
-          margin:0;
-          line-height: 0px;
-        }
+            .buttonAndTimer li{
+            list-style-type: none;
+            margin:0;
+            line-height: 0px;
+            }
 
-       .buttonAndTimer li img{
-          vertical-align: middle;
-        }
+            .buttonAndTimer li img{
+            vertical-align: middle;
+            }
 
-        .buttonAndTimer li input{
+            .buttonAndTimer li input{
             font-size:30px;
             padding-left: 10%;
             display: inline-block;
             vertical-align: middle;
-        }
+            }
 
-        .agentname {
-          color:#0077D4;
-        }
+            .agentname {
+            color:#0077D4;
+            }
 
-        .ticking {
-          color:#4BCA80 !important;
-        }
+            .ticking {
+            color:#4BCA80 !important;
+            }
 
-        .paused {
-          color:#15325C !important;
-        }
+            .paused {
+            color:#15325C !important;
+            }
 
-        .slds .slds-notify--toast {
+            .slds .slds-notify--toast {
 
             width: 232px;
             min-width:0;
 
-        }
+            }
 
-        .timer-tab-size {
-           width:50%;
-           height:10%;
-           text-align: center;
-           padding-top: 3%;
-           font-size: 16px;
-        }
+            .timer-tab-size {
+            width:50%;
+            height:10%;
+            text-align: center;
+            padding-top: 3%;
+            font-size: 16px;
+            }
 
-        #divId {
-          width:50%;
-          font-size: 30px;
-          margin:3%;
-          border: none !important;
-          text-align:center;
-        }
+            #divId {
+            width:50%;
+            font-size: 30px;
+            margin:3%;
+            border: none !important;
+            text-align:center;
+            }
 
 
 
-    </style>
+        </style>
 
-<div class="slds timerContainer">
-    <input id="recordId" type="hidden" value="{!recordId}"/>
+        <div class="slds timerContainer">
+            <input id="recordId" type="hidden" value="{!recordId}"/>
 
-   <!-- PAGE HEADER -->
-        <div class="slds-page-header" role="banner">
+            <!-- PAGE HEADER -->
+            <div class="slds-page-header" role="banner">
 
-          <!-- LAYOUT GRID -->
-          <div class="slds-grid">
+                <!-- LAYOUT GRID -->
+                <div class="slds-grid">
 
-            <!-- GRID COL -->
-            <div class="slds-col">
+                    <!-- GRID COL -->
+                    <div class="slds-col">
 
-              <!-- HEADING AREA -->
-              <h3 class="slds-text-heading--small slds-truncate" style="line-height:41px;">Session Timer</h3>
-              <!-- /HEADING AREA -->
+                        <!-- HEADING AREA -->
+                        <h3 class="slds-text-heading--small slds-truncate" style="line-height:41px;">Session Timer</h3>
+                        <!-- /HEADING AREA -->
+
+                    </div>
+
+                    <!-- GRID COL -->
+                    <div class="slds-col slds-no-flex slds-align-middle">
+                        <apex:outputPanel id="totalTimePanel">
+                            Total:  <c:TimeConversion seconds="{!cumulativeTime}"/>
+                        </apex:outputPanel>
+
+                    </div>
+                    <!-- / GRID COL -->
+
+                    <div class="slds-dropdown-trigger" style="padding-left:5px;">
+                        <button class="slds-button slds-button--icon-border-filled" aria-haspopup="true">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--hint">
+                                <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Show More</span>
+                        </button>
+                        <div class="slds-dropdown slds-dropdown--right slds-text-heading--label slds-dropdown--menu">
+                            <ul class="slds-dropdown__list" role="menu">
+                                <li id="menu-51-0" href="#" class="slds-dropdown__item"><a id="addtime" href="#" class="slds-truncate" role="menuitem">Add Time</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- / LAYOUT GRID -->
 
             </div>
+            <!-- / PAGE HEADER -->
 
-            <!-- GRID COL -->
-            <div class="slds-col slds-no-flex slds-align-middle">
-              <apex:outputPanel id="totalTimePanel">
-                   Total:  <c:TimeConversion seconds="{!cumulativeTime}"/>
-              </apex:outputPanel>
+            <div class="slds-tabs--default">
+                <ul class="slds-tabs--default__nav" role="tablist">
+                    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size" title="Item One" role="presentation">
 
-            </div>
-            <!-- / GRID COL -->
+                        <img id="active-auto-icon" src="{!$Resource.timerautoactive}"/>
+                        <img id="inactive-auto-icon" src="{!$Resource.timerautoinactive}"/>
+                        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1" id="tab-default-1__item">Auto</a>
+                    </li>
+                    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active" title="Item Two" role="presentation">
+                        <img id="active-manual-icon" src="{!$Resource.timermanualactive}"/>
+                        <img id="inactive-manual-icon" src="{!$Resource.timermanualinactive}"/>
+                        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2" id="tab-default-2__item">Manual</a>
+                    </li>
+                </ul>
+                <div class="timer">
 
-            <div class="slds-dropdown-trigger" style="padding-left:5px;">
-                  <button class="slds-button slds-button--icon-border-filled" aria-haspopup="true">
-                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--hint">
-                      <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
-                    </svg>
-                    <span class="slds-assistive-text">Show More</span>
-                  </button>
-                  <div class="slds-dropdown slds-dropdown--right slds-text-heading--label slds-dropdown--menu">
-                    <ul class="slds-dropdown__list" role="menu">
-                      <li id="menu-51-0" href="#" class="slds-dropdown__item"><a id="addtime" href="#" class="slds-truncate" role="menuitem">Add Time</a></li>
-                    </ul>
-                  </div>
+                    <center>
+                        <ul class="buttonAndTimer">
+                            <li><img id="play" src="{!$Resource.timerplay}" alt="playbutton" /> <img id="pause" src="{!$Resource.timerpause}" alt="pausebutton" />
+                                <!--  <p id="divId"/> -->
+                                <input id="divId" type='text' name='timer' class='slds-input'/>
+                            </li>
+
+                        </ul>
+                    </center>
+
                 </div>
 
-          </div>
-          <!-- / LAYOUT GRID -->
+                <div id="tab-default-1" class="slds-tabs--default__content" role="tabpanel" aria-labelledby="tab-default-1__item">
+                    <div class="slds-scrollable--y" style="max-height:220px;">
+                        <table class="slds-table slds-table--bordered slds-no-row-hover">
+                            <thead>
+                                <tr>
+                                    <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
+                                    <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
+                                    <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
+                                </tr>
+                            </thead>
 
-        </div>
-        <!-- / PAGE HEADER -->
+                            <tbody>
 
-    <div class="slds-tabs--default">
-  <ul class="slds-tabs--default__nav" role="tablist">
-    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size" title="Item One" role="presentation">
+                                <apex:repeat value="{!sessions}" var="session">
+                                    <tr class="slds-hint-parent">
+                                        <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
+                                        <td class="slds-size--1-of-3" data-label="DATE">
+                                            <c:LocaleDate date_Value="{!session.Date__c}"/>
+                                        </td>
+                                        <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}">
+                                            <c:TimeConversion seconds="{!session.Duration__c}"/>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
 
-        <img id="active-auto-icon" src="{!$Resource.timerautoactive}"/>
-        <img id="inactive-auto-icon" src="{!$Resource.timerautoinactive}"/>
-        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1" id="tab-default-1__item">Auto</a>
-    </li>
-    <li class="slds-tabs--default__item slds-text-heading--label timer-tab-size slds-active" title="Item Two" role="presentation">
-        <img id="active-manual-icon" src="{!$Resource.timermanualactive}"/>
-        <img id="inactive-manual-icon" src="{!$Resource.timermanualinactive}"/>
-        <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2" id="tab-default-2__item">Manual</a>
-    </li>
-  </ul>
-   <div class="timer">
+                            </tbody>
 
-       <center>
-            <ul class="buttonAndTimer">
-                <li><img id="play" src="{!$Resource.timerplay}" alt="playbutton" /> <img id="pause" src="{!$Resource.timerpause}" alt="pausebutton" />
-                  <!--  <p id="divId"/> -->
-                    <input id="divId" type='text' name='timer' class='slds-input'/>
-                </li>
-
-            </ul>
-        </center>
-
-    </div>
-
-  <div id="tab-default-1" class="slds-tabs--default__content" role="tabpanel" aria-labelledby="tab-default-1__item">
-     <div class="slds-scrollable--y" style="max-height:220px;">
-    <table class="slds-table slds-table--bordered slds-no-row-hover">
-          <thead>
-            <tr>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-              <apex:repeat value="{!sessions}" var="session">
-               <tr class="slds-hint-parent">
-                  <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
-                  <td class="slds-size--1-of-3" data-label="DATE">
-                      <c:LocaleDate date_Value="{!session.Date__c}"/>
-                   </td>
-                  <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}">
-                      <c:TimeConversion seconds="{!session.Duration__c}"/>
-                  </td>
-               </tr>
-             </apex:repeat>
-
-          </tbody>
-
-        </table>
-    </div>
-  </div>
-  <div id="tab-default-2" class="slds-tabs--default__content" role="tabpanel" aria-labelledby="tab-default-2__item">
-    <div class="slds-scrollable--y" style="max-height:220px;">
-     <apex:outputPanel id="showTable">
-         <table class="slds-table slds-table--bordered slds-no-row-hover">
-          <thead>
-            <tr>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
-              <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
-            </tr>
-          </thead>
-           <tbody>
-             <apex:repeat value="{!manualSessions}" var="session">
-               <tr class="slds-hint-parent">
-                  <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
-                  <td class="slds-size--1-of-3" data-label="DATE">
-                      <c:LocaleDate date_Value="{!session.Date__c}"/>
-                   </td>
-                  <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}">
-                      <c:TimeConversion seconds="{!session.Duration__c}"/>
-                  </td>
-               </tr>
-             </apex:repeat>
-          </tbody>
-        </table>
-     </apex:outputPanel>
-    </div>
-  </div>
-
-</div>
-
-
-
-
-    <div>
-  <div id="popup" aria-hidden="false" role="dialog" class="slds-modal">
-       <div class="slds-modal__container">
-          <div class="slds-modal__header">
-            <h2 class="slds-text-heading--medium">Manual Time Entry</h2>
-            <button class="slds-button slds-modal__close" id="close">
-              <svg aria-hidden="true" class="slds-button__icon slds-button__icon--inverse slds-button__icon--large">
-                <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
-              </svg>
-              <span class="slds-assistive-text">Close</span>
-            </button>
-          </div>
-          <div class="slds-modal__content">
-
-              <form class="slds-form--inline" style="overflow:hidden;">
-                  <div class="slds-form-element" style="float:left; max-width:46%; margin-right:8%;">
-                    <label class="slds-form-element__label" for="name">Hours</label>
-                    <div class="slds-form-element__control">
-                      <input id="hours" class="slds-input" type="text" placeholder="hh" />
+                        </table>
                     </div>
-                  </div>
-                  <div class="slds-form-element" style="float:left; max-width:46%; margin:0;">
-                    <label class="slds-form-element__label" for="email">Minutes</label>
-                    <div class="slds-form-element__control">
-                      <input id="minutes" class="slds-input" type="text" placeholder="mm" />
-                    </div>
-                  </div>
-                </form>
-              <div class="slds-form--stacked" style="clear:both; margin-top:10px;">
-              <div class="slds-form-element">
-                <label class="slds-form-element__label" for="textareaSample3">Comments</label>
-                <div class="slds-form-element__control">
-                  <textarea id="comments" class="slds-textarea"></textarea>
                 </div>
-              </div>
+                <div id="tab-default-2" class="slds-tabs--default__content" role="tabpanel" aria-labelledby="tab-default-2__item">
+                    <div class="slds-scrollable--y" style="max-height:220px;">
+                        <apex:outputPanel id="showTable">
+                            <table class="slds-table slds-table--bordered slds-no-row-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="slds-text-heading--label slds-size--1-of-3" scope="col">AGENT'S NAME</th>
+                                        <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DATE</th>
+                                        <th class="slds-text-heading--label slds-size--1-of-3" scope="col">DURATION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!manualSessions}" var="session">
+                                        <tr class="slds-hint-parent">
+                                            <td class="slds-size--1-of-3 agentname" data-label="AGENT'S NAME" >{!session.Agent__r.Name}</td>
+                                            <td class="slds-size--1-of-3" data-label="DATE">
+                                                <c:LocaleDate date_Value="{!session.Date__c}"/>
+                                            </td>
+                                            <td class="slds-size--1-of-3" data-label="DURATION" id="duration" data-duration="{!session.Duration__c}">
+                                                <c:TimeConversion seconds="{!session.Duration__c}"/>
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+
             </div>
-          </div>
-          <div class="slds-modal__footer">
-            <button class="slds-button slds-button--neutral" id="cancel">Cancel</button>
-            <button class="slds-button slds-button--neutral slds-button--brand" id="save">Add</button>
-          </div>
+
+
+
+
+            <div>
+                <div id="popup" aria-hidden="false" role="dialog" class="slds-modal">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__header">
+                            <h2 class="slds-text-heading--medium">Manual Time Entry</h2>
+                            <button class="slds-button slds-modal__close" id="close">
+                                <svg aria-hidden="true" class="slds-button__icon slds-button__icon--inverse slds-button__icon--large">
+                                    <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                        </div>
+                        <div class="slds-modal__content">
+
+                            <form class="slds-form--inline" style="overflow:hidden;">
+                                <div class="slds-form-element" style="float:left; max-width:46%; margin-right:8%;">
+                                    <label class="slds-form-element__label" for="name">Hours</label>
+                                    <div class="slds-form-element__control">
+                                        <input id="hours" class="slds-input" type="text" placeholder="hh" />
+                                    </div>
+                                </div>
+                                <div class="slds-form-element" style="float:left; max-width:46%; margin:0;">
+                                    <label class="slds-form-element__label" for="email">Minutes</label>
+                                    <div class="slds-form-element__control">
+                                        <input id="minutes" class="slds-input" type="text" placeholder="mm" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="slds-form--stacked" style="clear:both; margin-top:10px;">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="textareaSample3">Comments</label>
+                                    <div class="slds-form-element__control">
+                                        <textarea id="comments" class="slds-textarea"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-modal__footer">
+                            <button class="slds-button slds-button--neutral" id="cancel">Cancel</button>
+                            <button class="slds-button slds-button--neutral slds-button--brand" id="save">Add</button>
+                        </div>
+                    </div>
+
+                    <apex:form >
+
+                        <apex:actionFunction action="{!recordManualSession}" name="addManualTime" rerender="showTable, totalTimePanel">
+                            <apex:param name="duration" assignTo="{!duration}" value="" />
+                            <apex:param name="comments" assignTo="{!comments}" value="" />
+                        </apex:actionFunction>
+                    </apex:form>
+
+                </div>
+                <div id="popup-backdrop" class="slds-modal-backdrop"></div>
+            </div>
+
+            <div class="slds-notify-container">
+                <div class="slds-notify slds-notify--toast" role="alert">
+                    <span class="slds-assistive-text">Info</span>
+                    <button class="slds-button slds-notify__close">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--inverse">
+                            <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <div class="notify__content">
+                        <h2 class="slds-text-heading--small" id="message"></h2>
+                    </div>
+                </div>
+            </div>
+
+
         </div>
 
-       <apex:form >
-
-            <apex:actionFunction action="{!recordManualSession}" name="addManualTime" rerender="showTable, totalTimePanel">
-                <apex:param name="duration" assignTo="{!duration}" value="" />
-                <apex:param name="comments" assignTo="{!comments}" value="" />
-            </apex:actionFunction>
-       </apex:form>
-
-  </div>
-  <div id="popup-backdrop" class="slds-modal-backdrop"></div>
-</div>
-
-   <div class="slds-notify-container">
-    <div class="slds-notify slds-notify--toast" role="alert">
-        <span class="slds-assistive-text">Info</span>
-        <button class="slds-button slds-notify__close">
-          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--inverse">
-            <use xlink:href="{!URLFOR($Resource.timerlightningdesign, 'assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
-          </svg>
-          <span class="slds-assistive-text">Close</span>
-        </button>
-        <div class="notify__content">
-          <h2 class="slds-text-heading--small" id="message"></h2>
-        </div>
-      </div>
-    </div>
-
-
-</div>
-
-</html>
+    </html>
 
 
 
