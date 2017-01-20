@@ -2,7 +2,7 @@
 
 How to install
 
-Option 1: you can install using the lastest unmanaged package v1.14: 	https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nsGg
+Option 1: you can install using the lastest unmanaged package v1.14: 		https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nsGg
 
 
 Option 2:
