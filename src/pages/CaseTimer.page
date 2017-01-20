@@ -13,6 +13,8 @@
 
         var isLoggedOut = false;
 
+        var isTimeSaved = false;
+
         window.onload = function() {
 
 
@@ -59,7 +61,8 @@
                 //   debugger;
                 if (!isLoggedOut) {
                   sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
-                }
+                } 
+                
             });
 
 
@@ -144,23 +147,18 @@
                 //check if it is logout event to avoid
                 //beforeunloadevent to cache the time again
                 if (tab.message=='SFORCE_CONSOLE:LOGOUT') {
-                   isLoggedOut = true;
+                    isLoggedOut = true;
                 }
 
-                console.log("closing and saving: " + recordId);
+                var caseId = jq('#recordId').val().slice(0, -3);
 
-                var duration = jq('#divId').data('seconds');
-
-                Visualforce.remoting.Manager.invokeAction(
-                    '{!$RemoteAction.CaseTimeController.recordSession}',
-                    recordId,
-                    duration,
-                    function(result, event){
-                    },
-                    {escape: true}
-                );
-
-
+                if (tab.tabObjectId == caseId && !isTimeSaved) {
+                    var duration = jq('#divId').data('seconds');
+                    //fire save event, and it's handled in getSelectedTab VF,
+                    //since there is an annoying quirk to save the time in this file, when closng the tab
+                    sforce.console.fireEvent('saveEvent', caseId+'-'+duration);
+                    isTimeSaved = true;
+                }
             };
 
             var setSelectedCaseObjectId = function(result){
@@ -182,11 +180,7 @@
                 pause();
             });
 
-            sforce.console.getEnclosingTabId(function(result){
-
-                sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, onTabClose, { tabId : result.id });
-            });
-
+            sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, onTabClose);
             sforce.console.addEventListener(sforce.console.ConsoleEvent.CONSOLE_LOGOUT, onTabClose);
 
             var openPopup = function(){

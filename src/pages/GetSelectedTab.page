@@ -1,13 +1,39 @@
-<apex:page standardController="Case" showHeader="false" sidebar="false">
-   <apex:includeScript value="/support/console/34.0/integration.js"/>
-    <script>
-       
-        var eventHandler = function (result) {
-           sforce.console.fireEvent('ObjectEvent', result.objectId);
-        };
-        
-        sforce.console.onFocusedPrimaryTab(eventHandler);
-   
+<apex:page standardController="Case" extensions="CaseTimeController" showHeader="false" sidebar="false">
+    <apex:includeScript value="/support/console/38.0/integration.js"/>
+    <script type="text/javascript">
+
+    var eventHandler = function (result) {
+        sforce.console.fireEvent('ObjectEvent', result.objectId);
+    };
+
+    sforce.console.onFocusedPrimaryTab(eventHandler);
+
+    var saveTime = function(result){
+        console.log('save message: ' + result.message);
+        var params = result.message.split("-");
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.CaseTimeController.recordSession}',
+            params[0],
+            params[1],
+            function(result, event){
+                if (event.status) {
+                    console.log('Time saved: ' + result);
+                } else if (event.type === 'exception') {
+                    console.log(event.message + ' ---  '+ event.where );
+                } else {
+                    console.log(event.message);
+                }
+            },
+            {escape: true}
+        );
+
+    };
+
+    //handle in save event fired from casetimer VF
+    sforce.console.addEventListener('saveEvent', saveTime);
+
+
+
     </script>
-    
+
 </apex:page>
