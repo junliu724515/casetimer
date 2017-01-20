@@ -2,7 +2,7 @@
 
 How to install
 
-Option 1: you can install using the lastest unmanaged package v1.14: 		https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nsGg
+Option 1: you can install using the lastest unmanaged package v1.17: 		https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nswR
 
 
 Option 2:
@@ -13,7 +13,11 @@ Option 2:
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/src/main/webapp/resources/img/deploy.png">
 </a>
 
-fixes (v.1.14):
+fixes (v1.17)
+
+1. fixed the intermittent failures of saving session time on primary or sub tab
+
+fixes (v1.14):
 
 1. fixed the timer for reopened cases 
 
