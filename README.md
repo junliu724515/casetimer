@@ -1,6 +1,6 @@
 # casetimer
 
-How to install
+## How to install
 
 Option 1: you can install using the lastest unmanaged package v1.17: 		https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nswR
 
@@ -12,6 +12,12 @@ Option 2:
   <img alt="Deploy to Salesforce"
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/src/main/webapp/resources/img/deploy.png">
 </a>
+
+## How to Setup
+
+Please click <a href="CaseTimer%20App%20Documentation%20v0.2-4.pdf">Setup Documentation</a> to see the instructions
+
+## Bug fixes
 
 fixes (v1.17)
 
