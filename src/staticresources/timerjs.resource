@@ -14,7 +14,8 @@
 		startTime,
 		duration = null,
 		options = {
-			seconds: 0,									// default seconds value to start timer from
+            recordId: null,
+            seconds: 0,									// default seconds value to start timer from
 			editable: false,							// this will let users make changes to the time
 			restart: false,								// this will enable stop or continue after a timer callback
 			duration: null,								// duration to run callback after
@@ -88,6 +89,7 @@
 
 		$el[display](secondsToTime(sec));
 		$el.data('seconds', sec);
+        sessionStorage.setItem(options.recordId+'secondsOnPage', sec);
 	}
 
 	/**
@@ -123,7 +125,7 @@
 			}
 
 
-            // this is check if the timer is running by using css property when editing, 
+            // this is check if the timer is running by using css property when editing,
             // if paused already, leave it to be paused
 			if ($el.attr('class').indexOf('ticking') > -1 ) {
 			   resumeTimer();
@@ -131,7 +133,7 @@
 			else {
                $el.data('seconds', totalSeconds);
 			}
-		
+
 		});
 	}
 

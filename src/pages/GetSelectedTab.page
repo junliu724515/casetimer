@@ -18,6 +18,8 @@
             function(result, event){
                 if (event.status) {
                     console.log('Time saved: ' + result);
+                    //reset the time
+                    sessionStorage.removeItem(params[0]+'secondsOnPage');
                 } else if (event.type === 'exception') {
                     console.log(event.message + ' ---  '+ event.where );
                 } else {

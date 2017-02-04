@@ -11,6 +11,8 @@
 
         var recordId;
 
+        var isClosedCase;
+
         var isLoggedOut = false;
 
         var isTimeSaved = false;
@@ -53,47 +55,33 @@
         jq(function(){
 
             recordId = jq('#recordId').val();
-
-            var isClosedCase = {!isClosedCase};
-
-            //refresh event to keep the time value in session
-            jq( window ).bind("beforeunload", function() {
-                //   debugger;
-                if (!isLoggedOut) {
-                  sessionStorage.setItem(recordId+'secondsOnPage', jq('#divId').data('seconds'));
-                } 
-                
-            });
-
-
+            isClosedCase = (jq('#isClosedCase').val() == 'true');
 
             jq('#play').hide();
-            // jq('#timerEdit').hide();
             jq('#divId').attr('class','ticking slds-input');
 
 
             var start = function(){
-                //  debugger;
                 //if the there is time stored in session, start the timer from seconds left before refresh
+                //or from the hidden sidebar, see redner function in timer.js where the time is cached
                 var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
                 if (secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined') {
                     jq('#divId').timer({
+                        recordId: recordId,
                         editable: true,
                         format: '%H:%M:%S',
                     });
                 }else {
                     jq('#divId').timer({
+                        recordId: recordId,
                         seconds: secondsOnPage,
                         editable: true,
                         format: '%H:%M:%S',
                     });
                 }
-                //reset the time
-                sessionStorage.removeItem(recordId+'secondsOnPage');
             }
 
             var play = function(){
-                //   debugger;
                 jq('#divId').timer('resume');
                 jq('#divId').attr('class','ticking slds-input');
                 jq('#play').hide();
@@ -103,7 +91,6 @@
 
 
             var pause = function(){
-                //  debugger;
                 jq('#divId').timer('pause');
                 jq('#divId').attr('class','paused slds-input');
                 jq('#pause').hide();
@@ -120,6 +107,11 @@
                 //if the case is closed, no timer
                 if (isClosedCase){
                     jq('.timer').hide();
+                    //if the case is closed, save the time in the cache
+                    var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
+                    if (!(secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined')) {
+                        sforce.console.fireEvent('saveEvent', recordId+'-'+secondsOnPage);
+                    }
                 }
                 else{
                     start();
@@ -156,7 +148,7 @@
                     var duration = jq('#divId').data('seconds');
                     //fire save event, and it's handled in getSelectedTab VF,
                     //since there is an annoying quirk to save the time in this file, when closng the tab
-                    sforce.console.fireEvent('saveEvent', caseId+'-'+duration);
+                    sforce.console.fireEvent('saveEvent', recordId+'-'+duration);
                     isTimeSaved = true;
                 }
             };
@@ -176,7 +168,6 @@
                 startOrPause(result.objectId);
             });
             sforce.console.addEventListener('StopEvent', function(){
-                //   debugger;
                 pause();
             });
 
@@ -264,9 +255,6 @@
                 showManualTab();
 
             });
-
-
-
 
         });
 
@@ -357,6 +345,7 @@
 
         <div class="slds timerContainer">
             <input id="recordId" type="hidden" value="{!recordId}"/>
+            <input id="isClosedCase" type="hidden" value="{!isClosedCase}"/>
 
             <!-- PAGE HEADER -->
             <div class="slds-page-header" role="banner">
