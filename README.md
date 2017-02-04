@@ -19,6 +19,10 @@ Please click <a href="CaseTimer%20App%20Documentation%20v0.2-4.pdf">Setup Docume
 
 ## Bug fixes
 
+fixes (v1.18)
+
+1. fixed sidebar timer reset issue
+
 fixes (v1.17)
 
 1. fixed the intermittent failures of saving session time on primary or sub tab
