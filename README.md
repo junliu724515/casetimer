@@ -2,7 +2,7 @@
 
 ## How to install the latest code
 
-Step 1: install the Case timer app on AppExchange https://appexchange.salesforce.com/listingDetail?listingId=a0N3000000Dpol8EAB 
+Step 1: install the Case timer app on AppExchange https://appexchange.salesforce.com/listingDetail?listingId=a0N3000000Dpol8EAB into your org.
 
 
 Step 2: and then click on the button below to install the latest bug fixing patches
