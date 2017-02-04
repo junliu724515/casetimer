@@ -1,12 +1,11 @@
 # casetimer
 
-## How to install
+## How to install the latest code
 
-Option 1: you can install using the lastest unmanaged package v1.17: 		https://login.salesforce.com/packaging/installPackage.apexp?p0=04t28000000nswR
+Step 1: install the Case timer app on AppExchange https://appexchange.salesforce.com/listingDetail?listingId=a0N3000000Dpol8EAB 
 
 
-Option 2:
- you can install Case timer on AppExchange https://appexchange.salesforce.com/listingDetail?listingId=a0N3000000Dpol8EAB and then click the button below  to install the latest code fix patches
+Step 2: and then click on the button below to install the latest bug fixing patches
 
 <a href="https://githubsfdeploy.herokuapp.com?owner=junliu724515&repo=casetimer">
   <img alt="Deploy to Salesforce"
