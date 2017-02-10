@@ -50,6 +50,19 @@ public class CaseTimeControllerTest {
         System.assertEquals(contr.cumulativeTime, 100);
         
     }
+
+    @IsTest static void testIsCaseId(){
+
+        Case testCase = [select Subject from Case where Subject = 'test'];
+        System.assertEquals(CaseTimeController.isCaseId(testCase.Id), true);
+
+       // System.assertEquals(CaseTimeController.isCaseId('null'), false);
+
+        Account testAccount = new Account(Name='test');
+        insert testAccount;
+        System.assertEquals(CaseTimeController.isCaseId(testAccount.Id), false);
+
+    }
     
 
 }

@@ -74,6 +74,15 @@ Global with sharing class CaseTimeController {
 
     }
 
+    @RemoteAction
+    Global static Boolean isCaseId(Id objectId) {
+        System.debug('id type is: ' + objectId.getSobjectType());
+        if (objectId.getSobjectType()==Case.getSObjectType()) {
+            return true;
+        }
+        return false;
+    }
+
 
     public PageReference recordManualSession() {
 

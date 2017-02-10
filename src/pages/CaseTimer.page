@@ -123,16 +123,35 @@
             }
 
 
+            var isCaseId = function(objectId) {
+                return new Promise(function(resolve, reject){
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.CaseTimeController.isCaseId}',
+                        objectId,
+                        function(result, event){
+                            if (event.status) {
+                                resolve(result);
+                            } else if (event.type === 'exception') {
+                                console.log(event.message + ' ---  '+ event.where );
+                            } else {
+                                console.log(event.message);
+                            }
+                        },
+                        {escape: true}
+                    );
 
-            var startOrPause = function(recordid){
-                var recordId = jq('#recordId').val().slice(0, -3);
-                if (recordId != recordid) {
-                    pause();
-                }
-                else{
+                });
+            }
+
+            var startOrPause = function(tabObjectId){
+                var recordId = jq('#recordId').val();
+                var recordIdWithoutSUM = jq('#recordId').val().slice(0, -3)
+                if (recordId == tabObjectId || recordIdWithoutSUM == tabObjectId) {
                     play();
                 }
-
+                else{
+                    pause();
+                }
             };
 
             var onTabClose = function (tab) {
@@ -154,18 +173,32 @@
             };
 
             var setSelectedCaseObjectId = function(result){
-                //   console.log("message: " + result.message);
-                //suprisingly getFocusedSubtabObjectId can return primary or sub tab objectid
-                sforce.console.getFocusedSubtabObjectId(function(subTabObjectId){
-                    startOrPause(subTabObjectId.id);
+                    var primaryTabObjectId = result.message;
+                    sforce.console.getFocusedSubtabObjectId(function(subTabObject){
+                        var remoteCallPromise = isCaseId(primaryTabObjectId);
+                        remoteCallPromise.then(function(result){
+                                if (result) {
+                                    startOrPause(primaryTabObjectId);
+                                }else{
+                                    startOrPause(subTabObject.id);
+                         }
+                    });
                 });
             };
 
             //the event listener to hanle the fired event by swithing console primary tabs
             sforce.console.addEventListener('ObjectEvent', setSelectedCaseObjectId);
             //the event listener to hanle the fired event by swithing console sub tabs
-            sforce.console.onFocusedSubtab(function(result){
-                startOrPause(result.objectId);
+            sforce.console.onFocusedSubtab(function(subTub){
+                //only pause or resume when clicking on case tab, any other sub tab won't pause the timer
+                if (subTub.objectId!='null') {
+                    var remoteCallPromise = isCaseId(subTub.objectId);
+                    remoteCallPromise.then(function(result){
+                        if (result) {
+                            startOrPause(subTub.objectId);
+                        }
+                    });
+                }
             });
             sforce.console.addEventListener('StopEvent', function(){
                 pause();
