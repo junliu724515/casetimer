@@ -2,12 +2,6 @@
     <apex:includeScript value="/support/console/38.0/integration.js"/>
     <script type="text/javascript">
 
-    var eventHandler = function (result) {
-        sforce.console.fireEvent('ObjectEvent', result.objectId);
-    };
-
-    sforce.console.onFocusedPrimaryTab(eventHandler);
-
     var saveTime = function(result){
         console.log('save message: ' + result.message);
         var params = result.message.split("-");
@@ -20,6 +14,7 @@
                     console.log('Time saved: ' + result);
                     //reset the time
                     sessionStorage.removeItem(params[0]+'secondsOnPage');
+                    sessionStorage.removeItem(params[0]+'state');
                 } else if (event.type === 'exception') {
                     console.log(event.message + ' ---  '+ event.where );
                 } else {

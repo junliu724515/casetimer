@@ -17,41 +17,6 @@
 
         var isTimeSaved = false;
 
-        window.onload = function() {
-
-
-            var hidden, visibilityState, visibilityChange;
-
-            if (typeof document.hidden !== "undefined") {
-                hidden = "hidden", visibilityChange = "visibilitychange", visibilityState = "visibilityState";
-            }
-            else if (typeof document.mozHidden !== "undefined") {
-                hidden = "mozHidden", visibilityChange = "mozvisibilitychange", visibilityState = "mozVisibilityState";
-            }
-                else if (typeof document.msHidden !== "undefined") {
-                    hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
-                }
-                    else if (typeof document.webkitHidden !== "undefined") {
-                        hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
-                    }
-
-            document.addEventListener(visibilityChange, function() {
-                console.log("hidden: " + document[hidden]);
-                console.log(document[visibilityState]);
-
-                switch (document[visibilityState]) {
-                    case "visible":
-                        sforce.console.fireEvent('ObjectEvent', recordId);
-                        break;
-                    case "hidden":
-                        sforce.console.fireEvent('StopEvent');
-                        break;
-                }
-            });
-
-        };
-
-
         jq(function(){
 
             recordId = jq('#recordId').val();
@@ -59,7 +24,6 @@
 
             jq('#play').hide();
             jq('#divId').attr('class','ticking slds-input');
-
 
             var start = function(){
                 //if the there is time stored in session, start the timer from seconds left before refresh
@@ -86,7 +50,7 @@
                 jq('#divId').attr('class','ticking slds-input');
                 jq('#play').hide();
                 jq('#pause').show();
-
+                sessionStorage.setItem(recordId+'state', jq('#divId').data('state'));
             };
 
 
@@ -95,7 +59,7 @@
                 jq('#divId').attr('class','paused slds-input');
                 jq('#pause').hide();
                 jq('#play').show();
-
+                sessionStorage.setItem(recordId+'state', jq('#divId').data('state'));
             };
 
 
@@ -115,25 +79,16 @@
                 }
                 else{
                     start();
+                    var timerstate = sessionStorage.getItem(recordId+'state');
+                    if (timerstate==null || timerstate!='running'){
+                        pause();
+                    }
                 }
             }
             //if the case is not saved, don't show the timer
             else{
                 jq('.slds-tabs--default').hide();
             }
-
-
-
-            var startOrPause = function(recordid){
-                var recordId = jq('#recordId').val().slice(0, -3);
-                if (recordId != recordid) {
-                    pause();
-                }
-                else{
-                    play();
-                }
-
-            };
 
             var onTabClose = function (tab) {
                 //check if it is logout event to avoid
@@ -146,30 +101,14 @@
 
                 if (tab.tabObjectId == caseId && !isTimeSaved) {
                     var duration = jq('#divId').data('seconds');
-                    //fire save event, and it's handled in getSelectedTab VF,
-                    //since there is an annoying quirk to save the time in this file, when closng the tab
-                    sforce.console.fireEvent('saveEvent', recordId+'-'+duration);
-                    isTimeSaved = true;
+                    if (duration > 0){
+                        //fire save event, and it's handled in getSelectedTab VF,
+                        //since there is an annoying quirk to save the time in this file, when closng the tab
+                        sforce.console.fireEvent('saveEvent', recordId+'-'+duration);
+                        isTimeSaved = true;
+                    }
                 }
             };
-
-            var setSelectedCaseObjectId = function(result){
-                //   console.log("message: " + result.message);
-                //suprisingly getFocusedSubtabObjectId can return primary or sub tab objectid
-                sforce.console.getFocusedSubtabObjectId(function(subTabObjectId){
-                    startOrPause(subTabObjectId.id);
-                });
-            };
-
-            //the event listener to hanle the fired event by swithing console primary tabs
-            sforce.console.addEventListener('ObjectEvent', setSelectedCaseObjectId);
-            //the event listener to hanle the fired event by swithing console sub tabs
-            sforce.console.onFocusedSubtab(function(result){
-                startOrPause(result.objectId);
-            });
-            sforce.console.addEventListener('StopEvent', function(){
-                pause();
-            });
 
             sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, onTabClose);
             sforce.console.addEventListener(sforce.console.ConsoleEvent.CONSOLE_LOGOUT, onTabClose);
