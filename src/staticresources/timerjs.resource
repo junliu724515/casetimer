@@ -90,7 +90,9 @@
 		$el[display](secondsToTime(sec));
 		$el.data('seconds', sec);
         if (options.recordId!=null){
-           sessionStorage.setItem(options.recordId+'secondsOnPage', sec);
+           var sessionStorageOptions = JSON.parse(sessionStorage.getItem(options.recordId));
+           sessionStorageOptions.secondsOnPage = sec;
+           sessionStorage.setItem(options.recordId, JSON.stringify(sessionStorageOptions));
         }
 	}
 

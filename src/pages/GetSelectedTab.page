@@ -2,24 +2,39 @@
     <apex:includeScript value="/support/console/38.0/integration.js"/>
     <script type="text/javascript">
 
+    //capture the primary tab object id and check if it is a case record
     var eventHandler = function (result) {
-        sforce.console.fireEvent('ObjectEvent', result.objectId);
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.CaseTimeController.isCaseId}',
+            result.objectId,
+            function(result, event){
+                if (event.status) {
+                    let eventMessage = {'primaryTabObjectId':result.objectId,'isCaseId':result};
+                    sforce.console.fireEvent('ObjectEvent', JSON.stringify(eventMessage));
+                } else if (event.type === 'exception') {
+                    console.log(event.message + ' ---  '+ event.where );
+                } else {
+                    console.log(event.message);
+                }
+            },
+            {escape: true}
+        );
     };
 
     sforce.console.onFocusedPrimaryTab(eventHandler);
 
     var saveTime = function(result){
         console.log('save message: ' + result.message);
-        var params = result.message.split("-");
+        let message = JSON.parse(result.message);
         Visualforce.remoting.Manager.invokeAction(
             '{!$RemoteAction.CaseTimeController.recordSession}',
-            params[0],
-            params[1],
+            message.recordId,
+            message.duration,
             function(result, event){
                 if (event.status) {
                     console.log('Time saved: ' + result);
                     //reset the time
-                    sessionStorage.removeItem(params[0]+'secondsOnPage');
+                    sessionStorage.removeItem(message.recordId);
                 } else if (event.type === 'exception') {
                     console.log(event.message + ' ---  '+ event.where );
                 } else {
@@ -30,7 +45,6 @@
         );
 
     };
-
     //handle in save event fired from casetimer VF
     sforce.console.addEventListener('saveEvent', saveTime);
 

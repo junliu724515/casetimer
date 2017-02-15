@@ -48,7 +48,6 @@
                         break;
                 }
             });
-
         };
 
 
@@ -56,28 +55,45 @@
 
             recordId = jq('#recordId').val();
             isClosedCase = (jq('#isClosedCase').val() == 'true');
+            //initialize the storage object to cache time, state and tab id etc
+            if (sessionStorage.getItem(recordId)==null) {
+                sessionStorage.setItem(recordId, JSON.stringify({}));
+            }
 
             jq('#play').hide();
             jq('#divId').attr('class','ticking slds-input');
 
+            var getSessionStorageValue = function(key) {
+                let sessionStorageOptions = JSON.parse(sessionStorage.getItem(recordId));
+                return sessionStorageOptions[key];
+            }
+
+            var setSessionStorageValue = function(key, value) {
+                let sessionStorageOptions = JSON.parse(sessionStorage.getItem(recordId));
+                sessionStorageOptions[key] = value;
+                sessionStorage.setItem(recordId, JSON.stringify(sessionStorageOptions));
+            }
 
             var start = function(){
                 //if the there is time stored in session, start the timer from seconds left before refresh
                 //or from the hidden sidebar, see redner function in timer.js where the time is cached
-                var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
-                if (secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined') {
-                    jq('#divId').timer({
-                        recordId: recordId,
-                        editable: true,
-                        format: '%H:%M:%S',
-                    });
-                }else {
+                var secondsOnPage = getSessionStorageValue('secondsOnPage');
+                if (secondsOnPage) {
                     jq('#divId').timer({
                         recordId: recordId,
                         seconds: secondsOnPage,
                         editable: true,
                         format: '%H:%M:%S',
                     });
+                }else {
+                    jq('#divId').timer({
+                        recordId: recordId,
+                        editable: true,
+                        format: '%H:%M:%S',
+                    });
+                }
+                if (!getSessionStorageValue('timerstate')){
+                     setSessionStorageValue('timerstate', jq('#divId').data('state'));
                 }
             }
 
@@ -86,35 +102,48 @@
                 jq('#divId').attr('class','ticking slds-input');
                 jq('#play').hide();
                 jq('#pause').show();
-
             };
 
+            var manualPlay = function() {
+                play();
+                setSessionStorageValue('timerstate', jq('#divId').data('state'));
+            }
 
             var pause = function(){
                 jq('#divId').timer('pause');
                 jq('#divId').attr('class','paused slds-input');
                 jq('#pause').hide();
                 jq('#play').show();
-
             };
 
+            var manualPause = function() {
+                pause();
+                setSessionStorageValue('timerstate', jq('#divId').data('state'));
+            }
 
-            jq('#play').click(play);
+            jq('#play').click(manualPlay);
 
-            jq('#pause').click(pause);
+            jq('#pause').click(manualPause);
 
             if (recordId) {
                 //if the case is closed, no timer
                 if (isClosedCase){
                     jq('.timer').hide();
                     //if the case is closed, save the time in the cache
-                    var secondsOnPage = sessionStorage.getItem(recordId+'secondsOnPage');
-                    if (!(secondsOnPage === 'NaN' || secondsOnPage === null || secondsOnPage === 'undefined')) {
-                        sforce.console.fireEvent('saveEvent', recordId+'-'+secondsOnPage);
+                    var secondsOnPage = getSessionStorageValue('secondsOnPage');
+                    if (secondsOnPage) {
+                        let eventMessage = {'recordId':recordId,'duration':secondsOnPage};
+                        sforce.console.fireEvent('saveEvent', JSON.stringify(eventMessage));
                     }
                 }
                 else{
                     start();
+                    //when refresh or hidden on the sidebar, the console will refresh the case page component
+                    //(destroy the old one and create a new one), and this is to keep the same state
+                    // from the old destroyed case page component
+                    if(getSessionStorageValue('timerstate')!='running'){
+                        pause();
+                    }
                 }
             }
             //if the case is not saved, don't show the timer
@@ -132,21 +161,22 @@
                             if (event.status) {
                                 resolve(result);
                             } else if (event.type === 'exception') {
-                                console.log(event.message + ' ---  '+ event.where );
+                                reject(event.message + ' ---  '+ event.where);
                             } else {
-                                console.log(event.message);
+                                reject(event.message);
                             }
                         },
                         {escape: true}
                     );
-
                 });
             }
 
             var startOrPause = function(tabObjectId){
                 var recordId = jq('#recordId').val();
-                var recordIdWithoutSUM = jq('#recordId').val().slice(0, -3)
-                if (recordId == tabObjectId || recordIdWithoutSUM == tabObjectId) {
+                var recordIdWithoutSUM = jq('#recordId').val().slice(0, -3);
+                var timerstate = sessionStorage.getItem(recordId+'state');
+                if ((recordId == tabObjectId || recordIdWithoutSUM == tabObjectId)
+                       && getSessionStorageValue('timerstate')!='paused') {
                     play();
                 }
                 else{
@@ -165,30 +195,50 @@
 
                 if (tab.tabObjectId == caseId && !isTimeSaved) {
                     var duration = jq('#divId').data('seconds');
-                    //fire save event, and it's handled in getSelectedTab VF,
-                    //since there is an annoying quirk to save the time in this file, when closng the tab
-                    sforce.console.fireEvent('saveEvent', recordId+'-'+duration);
-                    isTimeSaved = true;
+                    if (duration>0){
+                       //fire save event, and it's handled in getSelectedTab VF,
+                       //since there is an annoying quirk to save the time in this file, when closng the tab
+                       let eventMessage = {'recordId':recordId,'duration':duration};
+                       sforce.console.fireEvent('saveEvent', JSON.stringify(eventMessage));
+                       isTimeSaved = true;
+                    }
                 }
             };
 
             var setSelectedCaseObjectId = function(result){
-                    var primaryTabObjectId = result.message;
+                    let message = JSON.parse(result.message);
+                    let primaryTabObjectId = message.primaryTabObjectId;
+                    let isPrimaryTabObjectIdCaseId = message.isCaseId;
+
                     sforce.console.getFocusedSubtabObjectId(function(subTabObject){
-                        var remoteCallPromise = isCaseId(primaryTabObjectId);
-                        remoteCallPromise.then(function(result){
-                                if (result) {
-                                    startOrPause(primaryTabObjectId);
-                                }else{
-                                    startOrPause(subTabObject.id);
-                         }
-                    });
+
+                        Promise.resolve(isPrimaryTabObjectIdCaseId)
+                        .then(function(isPrimaryTabObjectIdCaseId){
+                            if (isPrimaryTabObjectIdCaseId){
+                                startOrPause(primaryTabObjectId);
+                            }
+                            return isPrimaryTabObjectIdCaseId;
+                        })
+                        .then(function(isPrimaryTabObjectIdCaseId){
+                             if (!isPrimaryTabObjectIdCaseId){
+                                  return isCaseId(subTabObject.id);
+                             }
+                        })
+                        .then(function(isSubTabObjectIdCaseId){
+                             if (isSubTabObjectIdCaseId) {
+                                  startOrPause(subTabObject.id);
+                             }
+                        })
+                        .catch(function(e){
+                            console.log(e);
+                        });
                 });
             };
 
             //the event listener to hanle the fired event by swithing console primary tabs
             sforce.console.addEventListener('ObjectEvent', setSelectedCaseObjectId);
             //the event listener to hanle the fired event by swithing console sub tabs
+            //@todo: can I find primary tab using subtab
             sforce.console.onFocusedSubtab(function(subTub){
                 //only pause or resume when clicking on case tab, any other sub tab won't pause the timer
                 if (subTub.objectId!='null') {
@@ -197,7 +247,10 @@
                         if (result) {
                             startOrPause(subTub.objectId);
                         }
-                    });
+                    })
+                    .catch(function(e){
+                            console.log(e);
+                     });
                 }
             });
             sforce.console.addEventListener('StopEvent', function(){
