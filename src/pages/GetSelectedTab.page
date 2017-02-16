@@ -2,26 +2,60 @@
     <apex:includeScript value="/support/console/38.0/integration.js"/>
     <script type="text/javascript">
 
-    //capture the primary tab object id and check if it is a case record
-    var eventHandler = function (result) {
-        Visualforce.remoting.Manager.invokeAction(
-            '{!$RemoteAction.CaseTimeController.isCaseId}',
-            result.objectId,
-            function(result, event){
-                if (event.status) {
-                    let eventMessage = {'primaryTabObjectId':result.objectId,'isCaseId':result};
-                    sforce.console.fireEvent('ObjectEvent', JSON.stringify(eventMessage));
-                } else if (event.type === 'exception') {
-                    console.log(event.message + ' ---  '+ event.where );
-                } else {
-                    console.log(event.message);
-                }
-            },
-            {escape: true}
-        );
-    };
+    //check if it is a case record
+    var isCaseId = function(objectId) {
+        return new Promise(function(resolve, reject){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CaseTimeController.isCaseId}',
+                objectId,
+                function(result, event){
+                    if (event.status) {
+                        resolve(result);
+                    } else if (event.type === 'exception') {
+                        reject(event.message + ' ---  '+ event.where);
+                    } else {
+                        reject(event.message);
+                    }
+                },
+                {escape: true}
+            );
+        });
+    }
 
-    sforce.console.onFocusedPrimaryTab(eventHandler);
+    //capture the primary tab object id and check if it is a case record
+    sforce.console.onFocusedPrimaryTab(function(primaryTab) {
+        sforce.console.getFocusedSubtabObjectId(function(subTabObject){
+           isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
+                 if (isPrimaryTabObjectIdCaseId){
+                    sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
+                 }else{
+                       isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
+                             if (isSubTabObjectIdCaseId) {
+                                 sforce.console.fireEvent('ObjectEvent', subTabObject.id);
+                             }
+                       });
+                 }
+            })
+            .catch(function(e){
+                console.log(e);
+            });
+         });
+    });
+
+    //the event listener to hanle the fired event by switching console sub tabs
+    sforce.console.onFocusedSubtab(function(subTub){
+        //only pause or resume when clicking on case tab, any other sub tab won't pause the timer
+        if (subTub.objectId!='null') {
+            isCaseId(subTub.objectId).then(function(result){
+                if (result) {
+                   sforce.console.fireEvent('ObjectEvent', subTub.objectId);
+                }
+            })
+            .catch(function(e){
+                   console.log(e);
+             });
+        }
+    });
 
     var saveTime = function(result){
         console.log('save message: ' + result.message);
@@ -47,8 +81,6 @@
     };
     //handle in save event fired from casetimer VF
     sforce.console.addEventListener('saveEvent', saveTime);
-
-
 
     </script>
 
