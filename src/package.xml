@@ -1,16 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
         <members>CaseTimeController</members>
         <members>CaseTimeControllerTest</members>
+        <members>CaseTimerException</members>
+        <members>CaseTimerSecurityUtil</members>
+        <members>CaseTimerSecurityUtilTest</members>
         <members>ClosedCaseTest</members>
         <members>LocaleDateController</members>
         <members>LocaleDateControllerTest</members>
         <members>TimeConvensionControllerTest</members>
         <members>TimeConversionController</members>
-        <members>CaseTimerException</members>
-        <members>CaseTimerSecurityUtil</members>
-        <members>CaseTimerSecurityUtilTest</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -42,12 +42,12 @@
     <types>
         <members>timerautoactive</members>
         <members>timerautoinactive</members>
+        <members>timercasetimercss</members>
+        <members>timercasetimerjs</members>
+        <members>timercommonjs</members>
         <members>timerjqueryjs</members>
         <members>timerjs</members>
-        <members>timercommonjs</members>
-        <members>timercasetimerjs</members>
         <members>timerlightningdesign</members>
-        <members>timercasetimercss</members>
         <members>timermanualactive</members>
         <members>timermanualinactive</members>
         <members>timerpause</members>
