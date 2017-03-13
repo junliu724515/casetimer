@@ -1,6 +1,6 @@
 <apex:page standardController="Case" extensions="CaseTimeController"  showHeader="false" sidebar="false">
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-        <apex:includeScript value="/support/console/38.0/integration.js"/>
+        <apex:includeScript value="/support/console/39.0/integration.js"/>
         <apex:stylesheet value="{!URLFOR($Resource.timerlightningdesign, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
         <apex:stylesheet value="{!$Resource.timercasetimercss}" />
 

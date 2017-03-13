@@ -1,5 +1,5 @@
 <apex:page standardController="Case" extensions="CaseTimeController" showHeader="false" sidebar="false">
-    <apex:includeScript value="/support/console/38.0/integration.js"/>
+    <apex:includeScript value="/support/console/39.0/integration.js"/>
     <apex:includeScript value="{!$Resource.timercommonjs}"/>
     <script type="text/javascript">
 
@@ -72,28 +72,34 @@
     //@todo: dont set seestorage if primary and sub tab are the same
     sforce.console.onFocusedPrimaryTab(function(primaryTab) {
         currentPrimaryObjectId = primaryTab.objectId;
-        sforce.console.getFocusedSubtabObjectId(function(subTabObject){
-           isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
-                 if (isPrimaryTabObjectIdCaseId){
-                    currentRecordId = primaryTab.objectId;
-                    sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
-                 }else{
-                       isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
-                             if (isSubTabObjectIdCaseId) {
-                                 currentRecordId = subTabObject.id;
-                                 sessionStorage.setItem(currentPrimaryObjectId, subTabObject.id);
-                                 sforce.console.fireEvent('ObjectEvent', subTabObject.id);
-                             }
-                             else {
-                                 sforce.console.fireEvent('ObjectEvent', sessionStorage.getItem(currentPrimaryObjectId));
-                             }
-                       });
-                 }
-            })
-            .catch(function(e){
-                console.log(e);
-            });
-         });
+        //currentId might be set by onFocusedSubtab event before this event
+        //if the primary tab and saubtab object is the same, no need to make another remote call
+        if (currentPrimaryObjectId!==currentRecordId) {
+           sforce.console.getFocusedSubtabObjectId(function(subTabObject){
+               isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
+                     if (isPrimaryTabObjectIdCaseId){
+                        currentRecordId = primaryTab.objectId;
+                        sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
+                     }else{
+                           isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
+                                 if (isSubTabObjectIdCaseId) {
+                                     currentRecordId = subTabObject.id;
+                                     if (currentPrimaryObjectId!=null && currentPrimaryObjectId!==subTabObject.id) {
+                                         sessionStorage.setItem(currentPrimaryObjectId, subTabObject.id);
+                                     }
+                                     sforce.console.fireEvent('ObjectEvent', subTabObject.id);
+                                 }
+                                 else {
+                                     sforce.console.fireEvent('ObjectEvent', sessionStorage.getItem(currentPrimaryObjectId));
+                                 }
+                           });
+                     }
+                })
+                .catch(function(e){
+                    console.log(e);
+                });
+           });
+        }
     });
 
     //the event listener to hanle the fired event by switching console sub tabs
@@ -102,7 +108,10 @@
         if (subTub.objectId!='null') {
             isCaseId(subTub.objectId).then(function(result){
                 if (result) {
-                   sessionStorage.setItem(currentPrimaryObjectId, subTub.objectId);
+                   currentRecordId = subTub.objectId;
+                   if (currentPrimaryObjectId!=null && currentPrimaryObjectId!==subTub.objectId) {
+                     sessionStorage.setItem(currentPrimaryObjectId, subTub.objectId);
+                   }
                    sforce.console.fireEvent('ObjectEvent', subTub.objectId);
                 }
             })
@@ -134,6 +143,10 @@
     };
     //handle in save event fired from casetimer VF
     sforce.console.addEventListener('saveEvent', saveTime);
+
+
+
+
 
     </script>
 
