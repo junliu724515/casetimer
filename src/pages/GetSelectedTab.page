@@ -1,15 +1,60 @@
 <apex:page standardController="Case" extensions="CaseTimeController" showHeader="false" sidebar="false">
     <apex:includeScript value="/support/console/38.0/integration.js"/>
+    <apex:includeScript value="{!$Resource.timercommonjs}"/>
     <script type="text/javascript">
+
+    var currentPrimaryObjectId;
+    var currentRecordId;
+
+    window.onload = function() {
+
+        var hidden, visibilityState, visibilityChange;
+
+        if (typeof document.hidden !== "undefined") {
+            hidden = "hidden", visibilityChange = "visibilitychange", visibilityState = "visibilityState";
+        }
+        else if (typeof document.mozHidden !== "undefined") {
+            hidden = "mozHidden", visibilityChange = "mozvisibilitychange", visibilityState = "mozVisibilityState";
+        }
+        else if (typeof document.msHidden !== "undefined") {
+            hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
+        }
+        else if (typeof document.webkitHidden !== "undefined") {
+            hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
+        }
+
+        document.addEventListener(visibilityChange, function() {
+            console.log("hidden: " + document[hidden]);
+            console.log(document[visibilityState]);
+
+            switch (document[visibilityState]) {
+                case "visible":
+                    sforce.console.fireEvent('ObjectEvent', currentRecordId);
+                    break;
+                case "hidden":
+                    sforce.console.fireEvent('StopEvent');
+                    break;
+            }
+        });
+    };
+
 
     //check if it is a case record
     var isCaseId = function(objectId) {
         return new Promise(function(resolve, reject){
-            Visualforce.remoting.Manager.invokeAction(
+            //check storge first to avoid remote calls
+            let isTabObjectOfCase = retrieveSessionStorageValue(objectId, 'isOfCase');
+            if (isTabObjectOfCase==='true') {
+                resolve(true);
+            }else{
+                Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.CaseTimeController.isCaseId}',
                 objectId,
                 function(result, event){
                     if (event.status) {
+                        if (result) {
+                           putSessionStorageValue(objectId, 'isOfCase', 'true');
+                        }
                         resolve(result);
                     } else if (event.type === 'exception') {
                         reject(event.message + ' ---  '+ event.where);
@@ -18,20 +63,29 @@
                     }
                 },
                 {escape: true}
-            );
+               );
+            }
         });
     }
 
     //capture the primary tab object id and check if it is a case record
+    //@todo: dont set seestorage if primary and sub tab are the same
     sforce.console.onFocusedPrimaryTab(function(primaryTab) {
+        currentPrimaryObjectId = primaryTab.objectId;
         sforce.console.getFocusedSubtabObjectId(function(subTabObject){
            isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
                  if (isPrimaryTabObjectIdCaseId){
+                    currentRecordId = primaryTab.objectId;
                     sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
                  }else{
                        isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
                              if (isSubTabObjectIdCaseId) {
+                                 currentRecordId = subTabObject.id;
+                                 sessionStorage.setItem(currentPrimaryObjectId, subTabObject.id);
                                  sforce.console.fireEvent('ObjectEvent', subTabObject.id);
+                             }
+                             else {
+                                 sforce.console.fireEvent('ObjectEvent', sessionStorage.getItem(currentPrimaryObjectId));
                              }
                        });
                  }
@@ -48,12 +102,13 @@
         if (subTub.objectId!='null') {
             isCaseId(subTub.objectId).then(function(result){
                 if (result) {
+                   sessionStorage.setItem(currentPrimaryObjectId, subTub.objectId);
                    sforce.console.fireEvent('ObjectEvent', subTub.objectId);
                 }
             })
             .catch(function(e){
                    console.log(e);
-             });
+            });
         }
     });
 
@@ -67,8 +122,6 @@
             function(result, event){
                 if (event.status) {
                     console.log('Time saved: ' + result);
-                    //reset the time
-                    sessionStorage.removeItem(message.recordId);
                 } else if (event.type === 'exception') {
                     console.log(event.message + ' ---  '+ event.where );
                 } else {

@@ -141,9 +141,6 @@
 
             </div>
 
-
-
-
             <div>
                 <div id="popup" aria-hidden="false" role="dialog" class="slds-modal">
                     <div class="slds-modal__container">
@@ -218,6 +215,7 @@
         </div>
 
         <apex:includeScript value="{!$Resource.timerjqueryjs}"/>
+        <apex:includeScript value="{!$Resource.timercommonjs}"/>
         <apex:includeScript value="{!$Resource.timerjs}"/>
         <apex:includeScript value="{!$Resource.timercasetimerjs}"/>
 

@@ -10,43 +10,9 @@ var isLoggedOut = false;
 
 var isTimeSaved = false;
 
-window.onload = function() {
-
-
-    var hidden, visibilityState, visibilityChange;
-
-    if (typeof document.hidden !== "undefined") {
-        hidden = "hidden", visibilityChange = "visibilitychange", visibilityState = "visibilityState";
-    }
-    else if (typeof document.mozHidden !== "undefined") {
-        hidden = "mozHidden", visibilityChange = "mozvisibilitychange", visibilityState = "mozVisibilityState";
-    }
-        else if (typeof document.msHidden !== "undefined") {
-            hidden = "msHidden", visibilityChange = "msvisibilitychange", visibilityState = "msVisibilityState";
-        }
-            else if (typeof document.webkitHidden !== "undefined") {
-                hidden = "webkitHidden", visibilityChange = "webkitvisibilitychange", visibilityState = "webkitVisibilityState";
-            }
-
-    document.addEventListener(visibilityChange, function() {
-        console.log("hidden: " + document[hidden]);
-        console.log(document[visibilityState]);
-
-        switch (document[visibilityState]) {
-            case "visible":
-                sforce.console.fireEvent('ObjectEvent', recordId);
-                break;
-            case "hidden":
-                sforce.console.fireEvent('StopEvent');
-                break;
-        }
-    });
-};
-
-
 jq(function(){
 
-    recordId = jq('#recordId').val();
+    recordId = jq('#recordId').val().slice(0, -3);
     isClosedCase = (jq('#isClosedCase').val() == 'true');
     //initialize the storage object to cache time, state and tab id etc
     if (sessionStorage.getItem(recordId)==null) {
@@ -57,14 +23,11 @@ jq(function(){
     jq('#divId').attr('class','ticking slds-input');
 
     var getSessionStorageValue = function(key) {
-        let sessionStorageOptions = JSON.parse(sessionStorage.getItem(recordId));
-        return sessionStorageOptions[key];
+        return retrieveSessionStorageValue(recordId, key);
     }
 
     var setSessionStorageValue = function(key, value) {
-        let sessionStorageOptions = JSON.parse(sessionStorage.getItem(recordId));
-        sessionStorageOptions[key] = value;
-        sessionStorage.setItem(recordId, JSON.stringify(sessionStorageOptions));
+        putSessionStorageValue(recordId, key, value);
     }
 
     var start = function(){
@@ -95,12 +58,8 @@ jq(function(){
         jq('#divId').attr('class','ticking slds-input');
         jq('#play').hide();
         jq('#pause').show();
-    };
-
-    var manualPlay = function() {
-        play();
         setSessionStorageValue('timerstate', jq('#divId').data('state'));
-    }
+    };
 
     var pause = function(){
         jq('#divId').timer('pause');
@@ -114,7 +73,7 @@ jq(function(){
         setSessionStorageValue('timerstate', jq('#divId').data('state'));
     }
 
-    jq('#play').click(manualPlay);
+    jq('#play').click(play);
 
     jq('#pause').click(manualPause);
 
@@ -146,11 +105,10 @@ jq(function(){
 
 
     var startOrPause = function(tabObjectId){
-        var recordId = jq('#recordId').val();
-        var recordIdWithoutSUM = jq('#recordId').val().slice(0, -3);
-        var timerstate = sessionStorage.getItem(recordId+'state');
-        if ((recordId == tabObjectId || recordIdWithoutSUM == tabObjectId)
-               && getSessionStorageValue('timerstate')!='paused') {
+     //   let recordId = jq('#recordId').val();
+    //    var recordIdWithoutSUM = jq('#recordId').val().slice(0, -3);
+    //    var timerstate = sessionStorage.getItem(recordId+'state');
+        if (recordId == tabObjectId && getSessionStorageValue('timerstate')!='paused' ) {
             play();
         }
         else{
@@ -165,9 +123,10 @@ jq(function(){
             isLoggedOut = true;
         }
 
-        var caseId = jq('#recordId').val().slice(0, -3);
+        //reset the time
+        sessionStorage.removeItem(tab.tabObjectId);
 
-        if (tab.tabObjectId == caseId && !isTimeSaved) {
+        if (tab.tabObjectId == recordId && !isTimeSaved) {
             var duration = jq('#divId').data('seconds');
             if (duration>0){
                //fire save event, and it's handled in getSelectedTab VF,
