@@ -74,35 +74,31 @@
     //capture the primary tab object id and check if it is a case record
     //@todo: dont set seestorage if primary and sub tab are the same
     sforce.console.onFocusedPrimaryTab(function(primaryTab) {
-        currentPrimaryObjectId = primaryTab.objectId;
-        //currentId might be set by onFocusedSubtab event before this event
-        //if the primary tab and saubtab object is the same, no need to make another remote call
-        if (currentPrimaryObjectId!==currentRecordId) {
-           sforce.console.getFocusedSubtabObjectId(function(subTabObject){
-               isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
-                     if (isPrimaryTabObjectIdCaseId){
-                        currentRecordId = primaryTab.objectId;
-                        sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
-                     }else{
-                           isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
-                                 if (isSubTabObjectIdCaseId) {
-                                     currentRecordId = subTabObject.id;
-                                     if (currentPrimaryObjectId!=null && currentPrimaryObjectId!==subTabObject.id) {
-                                         sessionStorage.setItem(currentPrimaryObjectId, subTabObject.id);
-                                     }
-                                     sforce.console.fireEvent('ObjectEvent', subTabObject.id);
+       currentPrimaryObjectId = primaryTab.objectId;
+       sforce.console.getFocusedSubtabObjectId(function(subTabObject){
+           isCaseId(primaryTab.objectId).then(function(isPrimaryTabObjectIdCaseId){
+                 if (isPrimaryTabObjectIdCaseId){
+                    currentRecordId = primaryTab.objectId;
+                    sforce.console.fireEvent('ObjectEvent', primaryTab.objectId);
+                 }else{
+                       isCaseId(subTabObject.id).then(function(isSubTabObjectIdCaseId){
+                             if (isSubTabObjectIdCaseId) {
+                                 currentRecordId = subTabObject.id;
+                                 if (currentPrimaryObjectId!=null && currentPrimaryObjectId!==subTabObject.id) {
+                                     sessionStorage.setItem(currentPrimaryObjectId, subTabObject.id);
                                  }
-                                 else {
-                                     sforce.console.fireEvent('ObjectEvent', sessionStorage.getItem(currentPrimaryObjectId));
-                                 }
-                           });
-                     }
-                })
-                .catch(function(e){
-                    console.log(e);
-                });
-           });
-        }
+                                 sforce.console.fireEvent('ObjectEvent', subTabObject.id);
+                             }
+                             else {
+                                 sforce.console.fireEvent('ObjectEvent', sessionStorage.getItem(currentPrimaryObjectId));
+                             }
+                       });
+                 }
+            })
+            .catch(function(e){
+                console.log(e);
+            });
+       });
     });
 
     //the event listener to hanle the fired event by switching console sub tabs
@@ -152,6 +148,7 @@
         //reset the time, it will be triggered twice by primary tab ans sub tab
         sessionStorage.removeItem(tab.tabObjectId);
     });
+
 
 
 
