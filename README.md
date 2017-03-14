@@ -20,6 +20,11 @@ Any questions, please email me liujun.dragon@gmail.com
 Please click <a href="CaseTimer%20App%20Documentation%20v0.2-4.pdf">Setup Documentation</a> to see the instructions
 
 ## Bug fixes
+fixes (v1.19)
+
+1. Only the focus on the case record tab pauses or starts the timer
+2. Added FLS secuirty check
+3. Upgraded API version to 39 (Spring 17)
 
 fixes (v1.18)
 
