@@ -38,32 +38,35 @@
         });
     };
 
-
     //check if it is a case record
     var isCaseId = function(objectId) {
         return new Promise(function(resolve, reject){
-            //check storge first to avoid remote calls
-            let isTabObjectOfCase = retrieveSessionStorageValue(objectId, 'isOfCase');
-            if (isTabObjectOfCase==='true') {
-                resolve(true);
-            }else{
-                Visualforce.remoting.Manager.invokeAction(
-                '{!$RemoteAction.CaseTimeController.isCaseId}',
-                objectId,
-                function(result, event){
-                    if (event.status) {
-                        if (result) {
-                           putSessionStorageValue(objectId, 'isOfCase', 'true');
+            if (objectId && objectId!=='null'){
+                //check storge first to avoid remote calls
+                let isTabObjectOfCase = retrieveSessionStorageValue(objectId, 'isOfCase');
+                if (isTabObjectOfCase==='true') {
+                    resolve(true);
+                }else{
+                    Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CaseTimeController.isCaseId}',
+                    objectId,
+                    function(result, event){
+                        if (event.status) {
+                            if (result) {
+                               putSessionStorageValue(objectId, 'isOfCase', 'true');
+                            }
+                            resolve(result);
+                        } else if (event.type === 'exception') {
+                            reject(event.message + ' ---  '+ event.where);
+                        } else {
+                            reject(event.message);
                         }
-                        resolve(result);
-                    } else if (event.type === 'exception') {
-                        reject(event.message + ' ---  '+ event.where);
-                    } else {
-                        reject(event.message);
-                    }
-                },
-                {escape: true}
-               );
+                    },
+                    {escape: true}
+                   );
+                }
+            }else{
+               resolve(false);
             }
         });
     }
@@ -144,7 +147,11 @@
     //handle in save event fired from casetimer VF
     sforce.console.addEventListener('saveEvent', saveTime);
 
-
+    //when the tab is closed, make sure all data in session storage related to the tab is cleared
+    sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, function(tab){
+        //reset the time, it will be triggered twice by primary tab ans sub tab
+        sessionStorage.removeItem(tab.tabObjectId);
+    });
 
 
 

@@ -123,9 +123,6 @@ jq(function(){
             isLoggedOut = true;
         }
 
-        //reset the time
-        sessionStorage.removeItem(tab.tabObjectId);
-
         if (tab.tabObjectId == recordId && !isTimeSaved) {
             var duration = jq('#divId').data('seconds');
             if (duration>0){
