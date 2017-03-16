@@ -13,7 +13,7 @@ Step 2: and then click on the button below to install the latest bug fixing patc
 
 Please note if you have already installed the Case timer app in your org, please skip Step 1 and go to Step 2 directly. 
 
-Any questions, please email me liujun.dragon@gmail.com
+Any questions, please email me jun.liu@jmcloudservices.com
 
 ## How to Setup
 
