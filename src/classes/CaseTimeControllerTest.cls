@@ -1,4 +1,4 @@
-@IsTest
+@IsTest(SeeAllData=false)
 public class CaseTimeControllerTest {
 
     

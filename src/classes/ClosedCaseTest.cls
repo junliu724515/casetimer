@@ -6,7 +6,7 @@
 public  class ClosedCaseTest {
 
 
-    @IsTest(SeeAllData=true) static void testIsClosedCase() {
+    @IsTest(SeeAllData=false) static void testIsClosedCase() {
 
         Case newCase = new Case();
         newCase.Subject = 'testClosed';
@@ -23,7 +23,7 @@ public  class ClosedCaseTest {
 
     }
 
-    @IsTest(SeeAllData=true) static void testIsNotClosedCase() {
+    @IsTest(SeeAllData=false) static void testIsNotClosedCase() {
 
         Case newCase = new Case();
         newCase.Subject = 'testClosed';

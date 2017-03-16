@@ -1,7 +1,7 @@
 /**
  * Created by Jun Liu on 14/03/2017.
  */
-@IsTest
+@IsTest(SeeAllData=false)
 public with sharing class CaseTimerSecurityUtilTest {
 
 
