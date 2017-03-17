@@ -41,4 +41,4 @@ fixes (v1.14):
 fixes (v1.13):
 
 1. Stop/Hide the timer for unsaved or closed cases
-2. Allow reports on Custom object Sesstion time
+2. Allow reports on Custom object Session time
